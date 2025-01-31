@@ -38,9 +38,9 @@ function getMediaConstraints(
     };
 
     if (stream === "screen" && currentConfig.screen) {
-        constraints.video = { width: 720, height: 480 };
+        constraints.video = { width: 1920, height: 1080 };
     } else if (stream === "facecam" && currentConfig.facecam) {
-        constraints.video = { width: 720 / 4, height: 480 / 4 };
+        constraints.video = { width: 720, height: 480 };
     }
 
     return constraints;
@@ -94,6 +94,13 @@ async function getScreenStream() {
         screenMediaStream = await navigator.mediaDevices.getDisplayMedia(
             getMediaConstraints("screen")
         );
+
+        // const videoTrack = screenMediaStream.getVideoTracks()[0];
+        // const settings = videoTrack.getSettings();
+
+        // const ratio = Math.floor((settings.width || 720) / 720);
+        // outputCanvas.width = (settings.width || 720) / (ratio * 1.2);
+        // outputCanvas.height = (settings.height || 480) / (ratio * 1.2);
     } catch (err) {
         console.error(err);
     }
