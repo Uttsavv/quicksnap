@@ -12,6 +12,8 @@ let animationFrameId: number | null = null;
 
 let facecamMediaStream: MediaStream | null = null;
 let screenMediaStream: MediaStream | null = null;
+let mediaRecorder: MediaRecorder | null = null;
+let recordedChunks: Blob[] = [];
 
 // Create hidden video elements for rendering
 const facecamVideo = document.createElement("video");
@@ -73,6 +75,30 @@ async function startRecording() {
             screenMediaStream && playStream(screenMediaStream, screenVideo);
         }
 
+        //Start Canvas Stream
+        const canvasStream = outputCanvas.captureStream(30);
+        mediaRecorder = new MediaRecorder(canvasStream);
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = "recording.webm";
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            recordedChunks = [];
+        };
+
+        mediaRecorder.start();
         startCanvasRendering();
     } catch (err) {
         console.error("Error accessing media devices:", err);
@@ -108,6 +134,11 @@ async function getScreenStream() {
 
 // Stop the recording
 function stopRecording() {
+    if (mediaRecorder) {
+        mediaRecorder.stop();
+        mediaRecorder = null;
+    }
+
     if (facecamMediaStream) {
         stopStreamTracks(facecamMediaStream);
         facecamMediaStream = null;
