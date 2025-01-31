@@ -75,9 +75,29 @@ async function startRecording() {
             screenMediaStream && playStream(screenMediaStream, screenVideo);
         }
 
-        //Start Canvas Stream
+        // Combine audio tracks
+        const combinedStream = new MediaStream();
+
+        if (facecamMediaStream) {
+            facecamMediaStream.getAudioTracks().forEach((track) => {
+                combinedStream.addTrack(track);
+            });
+        }
+
+        if (screenMediaStream) {
+            screenMediaStream.getAudioTracks().forEach((track) => {
+                combinedStream.addTrack(track);
+            });
+        }
+
+        // Start Canvas Stream
         const canvasStream = outputCanvas.captureStream(30);
-        mediaRecorder = new MediaRecorder(canvasStream);
+        const finalStream = new MediaStream([
+            ...canvasStream.getVideoTracks(),
+            ...combinedStream.getAudioTracks(),
+        ]);
+
+        mediaRecorder = new MediaRecorder(finalStream);
 
         mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
