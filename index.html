@@ -9,12 +9,25 @@
 </head>
 
 <body>
-  <div id="app">
-    <button recording-button>Start Recording</button>
-    <div id="recording-options">
-
+  <div id="app" class="flex items-center">
+    <div>
+      <button recording-button>Start Recording</button>
+      <div id="recording-options" class="flex flex-wrap">
+        <label>
+          <input type="checkbox" id="audio" checked />
+          Audio
+        </label>
+        <label>
+          <input type="checkbox" id="facecam" checked />
+          Facecam
+        </label>
+        <label>
+          <input type="checkbox" id="screen" checked />
+          Screen
+        </label>
+      </div>
     </div>
-    <video autoplay video-player style="display:none"></video>
+    <canvas class="display-none" width="720" height="480" output-canvas></canvas>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

@@ -111,6 +111,10 @@ button:focus-visible {
     justify-content: center;
 }
 
-.align-center {
+.items-center {
     align-items: center;
+}
+
+.display-none {
+    display: none;
 }
