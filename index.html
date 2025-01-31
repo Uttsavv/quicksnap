@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quicksnap</title>
+  <link rel="shortcut icon" href="/quicksnap/assets/favicon-COFRe82v.ico" type="image/x-icon">
+  <script type="module" crossorigin src="/quicksnap/assets/index-DS2J6aMS.js"></script>
+  <link rel="stylesheet" crossorigin href="/quicksnap/assets/index-Cj6xvWj2.css">
+</head>
+
+<body>
+  <div id="app" class="flex items-center">
+    <div>
+      <button recording-button>Start Recording</button>
+      <div id="recording-options" class="flex flex-wrap">
+        <label>
+          <input type="checkbox" id="audio" checked />
+          Audio
+        </label>
+        <label>
+          <input type="checkbox" id="facecam" checked />
+          Facecam
+        </label>
+        <label>
+          <input type="checkbox" id="screen" checked />
+          Screen
+        </label>
+      </div>
+    </div>
+    <canvas class="display-none" width="720" height="480" output-canvas></canvas>
+  </div>
+</body>
+
+</html>
