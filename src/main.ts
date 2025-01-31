@@ -58,7 +58,7 @@ recordingButton?.addEventListener("click", () => {
 // Start the recording (get media)
 async function startRecording() {
     recordingButton.textContent = "Stop Recording";
-    outputCanvas.classList.remove("display-none");
+    outputCanvas.classList.remove("hidden");
 
     const currentConfig = getLiveRecordingConfig();
 
@@ -140,7 +140,7 @@ function resetUI() {
 
     if (canvasCtx) {
         canvasCtx.reset();
-        outputCanvas.classList.add("display-none");
+        outputCanvas.classList.add("hidden");
     }
 }
 

@@ -10,8 +10,8 @@
 </head>
 
 <body>
-  <div id="app" class="flex items-center">
-    <div>
+  <div class="flex items-center justify-center w-100 gap-xl">
+    <div class="justify-center text-center">
       <button recording-button>Start Recording</button>
       <div id="recording-options" class="flex flex-wrap">
         <label>
@@ -28,7 +28,7 @@
         </label>
       </div>
     </div>
-    <canvas class="display-none" width="720" height="480" output-canvas></canvas>
+    <canvas class="hidden" width="720" height="480" output-canvas></canvas>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
