@@ -22,6 +22,7 @@ export const noiseSuppression = signal(true);
 
 export const cameras = signal<MediaDeviceInfo[]>([]);
 export const mics = signal<MediaDeviceInfo[]>([]);
+// The device actually in use (shown in the pickers).
 export const cameraId = signal<string>("");
 export const micId = signal<string>("");
 
@@ -66,6 +67,81 @@ export async function refreshDevices() {
     mics.value = all.filter((d) => d.kind === "audioinput" && d.deviceId);
 }
 navigator.mediaDevices?.addEventListener?.("devicechange", () => void refreshDevices());
+
+type DeviceKind = "videoinput" | "audioinput";
+
+// Continuity Camera / iPhone mic. Opening one wakes the phone, so we only use
+// it when the user picks it.
+const PHONE = /iphone|ipad|continuity/i;
+
+const PREF_KEY: Record<DeviceKind, string> = { videoinput: "quicksnap.camera", audioinput: "quicksnap.mic" };
+
+function loadPref(kind: DeviceKind): string {
+    try {
+        return localStorage.getItem(PREF_KEY[kind]) ?? "";
+    } catch {
+        return "";
+    }
+}
+
+function savePref(kind: DeviceKind, id: string) {
+    try {
+        if (id) localStorage.setItem(PREF_KEY[kind], id);
+        else localStorage.removeItem(PREF_KEY[kind]);
+    } catch {
+        // Storage blocked: the choice just won't survive a reload.
+    }
+}
+
+// The device the user picked; "" means "let us choose".
+const cameraPref = signal(loadPref("videoinput"));
+const micPref = signal(loadPref("audioinput"));
+
+export function chooseCamera(id: string) {
+    cameraPref.value = id;
+    savePref("videoinput", id);
+    void startCamera();
+}
+
+export function chooseMic(id: string) {
+    micPref.value = id;
+    savePref("audioinput", id);
+    void startMic();
+}
+
+// The device to open when the user hasn't picked one: the system default,
+// unless that's a phone. undefined = let the browser decide.
+async function autoDevice(kind: DeviceKind): Promise<string | undefined> {
+    const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === kind && d.deviceId && d.label);
+    if (!list.length) return undefined; // no permission yet, labels are hidden
+    const dflt = list.find((d) => d.deviceId === "default");
+    if (dflt && !PHONE.test(dflt.label)) return undefined;
+    return list.find((d) => d.deviceId !== "default" && d.deviceId !== "communications" && !PHONE.test(d.label))?.deviceId;
+}
+
+async function openDevice(kind: DeviceKind, pref: string, constraints: (id?: string) => MediaTrackConstraints): Promise<MediaStream> {
+    const get = (id?: string) => navigator.mediaDevices.getUserMedia(kind === "videoinput" ? { video: constraints(id) } : { audio: constraints(id) });
+    if (pref) {
+        try {
+            return await get(pref);
+        } catch (e) {
+            // The chosen device went away (unplugged, phone out of range): fall back.
+            if ((e as DOMException).name === "NotAllowedError") throw e;
+        }
+    }
+    const stream = await get(await autoDevice(kind));
+    // On the very first visit labels are hidden until permission is granted, so
+    // the browser may have handed us the phone. Now we can see names: switch.
+    const track = stream.getTracks()[0];
+    if (track && PHONE.test(track.label)) {
+        const alt = await autoDevice(kind);
+        if (alt && alt !== track.getSettings().deviceId) {
+            stopTracks(stream);
+            return get(alt);
+        }
+    }
+    return stream;
+}
 
 export async function chooseScreen() {
     try {
@@ -113,14 +189,7 @@ export async function startCamera() {
         frameRate: { ideal: 30 },
     });
     try {
-        let stream: MediaStream;
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: video(cameraId.value) });
-        } catch (e) {
-            // The chosen camera went away (unplugged, Continuity Camera off): use the default.
-            if (!cameraId.value || (e as DOMException).name === "NotAllowedError") throw e;
-            stream = await navigator.mediaDevices.getUserMedia({ video: video() });
-        }
+        const stream = await openDevice("videoinput", cameraPref.value, video);
         cameraStream.value = stream;
         const track = stream.getVideoTracks()[0];
         cameraId.value = track.getSettings().deviceId ?? "";
@@ -140,13 +209,9 @@ function onDeviceLost(kind: "camera" | "mic") {
         return;
     }
     toast(`${name} disconnected. Switched to the default ${name.toLowerCase()}.`);
-    if (kind === "camera") {
-        cameraId.value = "";
-        void startCamera();
-    } else {
-        micId.value = "";
-        void startMic();
-    }
+    // The saved choice stays: it's used again next time the device is around.
+    if (kind === "camera") void startCamera();
+    else void startMic();
 }
 
 export async function startMic() {
@@ -163,13 +228,7 @@ export async function startMic() {
         channelCount: 1,
     });
     try {
-        let stream: MediaStream;
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: audio(micId.value) });
-        } catch (e) {
-            if (!micId.value || (e as DOMException).name === "NotAllowedError") throw e;
-            stream = await navigator.mediaDevices.getUserMedia({ audio: audio() });
-        }
+        const stream = await openDevice("audioinput", micPref.value, audio);
         micStream.value = stream;
         getMixer().set("mic", stream);
         const track = stream.getAudioTracks()[0];

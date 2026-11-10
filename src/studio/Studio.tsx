@@ -261,10 +261,7 @@ function Sources() {
                             devices={S.cameras.value}
                             fallback="Default camera"
                             disabled={live}
-                            onChange={(id) => {
-                                S.cameraId.value = id;
-                                void S.startCamera();
-                            }}
+                            onChange={S.chooseCamera}
                         />
                     )}
                 </div>
@@ -296,10 +293,7 @@ function Sources() {
                                 devices={S.mics.value}
                                 fallback="Default microphone"
                                 disabled={live}
-                                onChange={(id) => {
-                                    S.micId.value = id;
-                                    void S.startMic();
-                                }}
+                                onChange={S.chooseMic}
                             />
                             <Meter db={levels.mic ?? -Infinity} />
                         </>
