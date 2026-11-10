@@ -231,8 +231,9 @@ function Sources() {
                         )}
                     </div>
                     <Check label={S.isMac ? "Include tab audio" : "Include system or tab audio"} checked={S.systemAudioOn.value} disabled={live} onChange={(v) => (S.systemAudioOn.value = v)} />
-                    {S.systemAudioOn.value && S.isMac && <div class="small warn-text">On a Mac, sound only comes through when you share a browser tab, not a window or the whole screen.</div>}
-                    {screen && S.systemAudioOn.value && !screen.getAudioTracks().length && <div class="small muted">This share has no sound. Share again and turn on “Share audio” in the picker.</div>}
+                    {screen && S.systemAudioOn.value && !screen.getAudioTracks().length && (
+                        <div class="small warn-text">{S.isMac ? "No sound. To record audio, share a browser tab instead." : "No sound. Share again and turn on “Share audio”."}</div>
+                    )}
                 </div>
 
                 <div class="group source">
