@@ -1,6 +1,6 @@
 # Quicksnap design system
 
-Live reference: run `npm run dev` and open `#/design` (the nav link appears in dev only).
+Tokens live in `src/styles/tokens.css`, motion in `src/styles/motion.css` and `src/ui/motion.tsx`.
 
 | File | What it holds |
 |---|---|
