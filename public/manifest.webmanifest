@@ -1,0 +1,13 @@
+{
+  "name": "Quicksnap",
+  "short_name": "Quicksnap",
+  "description": "Record your screen and camera in the browser, then polish and export. Nothing leaves your device.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0d0e11",
+  "theme_color": "#0d0e11",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

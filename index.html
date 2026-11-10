@@ -1,36 +1,17 @@
 <!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quicksnap</title>
-  <link rel="shortcut icon" href="/public/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="/src/style.css">
-</head>
-
-<body>
-  <div class="flex items-center justify-center w-100 gap-xl">
-    <div class="justify-center text-center">
-      <button recording-button>Start Recording</button>
-      <div id="recording-options" class="flex flex-wrap">
-        <label>
-          <input type="checkbox" id="audio" checked />
-          Audio
-        </label>
-        <label>
-          <input type="checkbox" id="facecam" checked />
-          Facecam
-        </label>
-        <label>
-          <input type="checkbox" id="screen" checked />
-          Screen
-        </label>
-      </div>
-    </div>
-    <canvas class="hidden" width="720" height="480" output-canvas></canvas>
-  </div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0e11" />
+    <meta name="description" content="Record your screen and camera in the browser, then polish it with zooms, backgrounds and captions. Nothing leaves your device." />
+    <title>Quicksnap</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
