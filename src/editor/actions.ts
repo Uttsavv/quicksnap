@@ -93,7 +93,7 @@ export function clearSuggestions() {
 
 async function runTask<T>(label: string, fn: (progress: (p: number, l?: string) => void, signal: AbortSignal) => Promise<T>): Promise<T | undefined> {
     if (task.value) {
-        toast("Another task is still running.", "error");
+        toast("Wait for the current task to finish.", "error");
         return;
     }
     const ac = new AbortController();

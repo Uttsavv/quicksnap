@@ -35,7 +35,7 @@ export function Library() {
     useEffect(() => void load(), []);
 
     const remove = async (p: Project) => {
-        if (!confirm(`Delete "${p.name}"? This removes the recording from this browser.`)) return;
+        if (!confirm(`Delete "${p.name}"? It's only stored in this browser, so this can't be undone.`)) return;
         try {
             await deleteProject(p.id);
             await load();

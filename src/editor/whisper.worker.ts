@@ -20,7 +20,7 @@ let asr: AutomaticSpeechRecognitionPipeline | null = null;
 async function load() {
     if (asr) return asr;
     const gpu = "gpu" in navigator && !!(await (navigator as Navigator & { gpu: { requestAdapter(): Promise<unknown> } }).gpu.requestAdapter().catch(() => null));
-    post({ type: "status", text: gpu ? "Loading speech model (WebGPU)…" : "Loading speech model…" });
+    post({ type: "status", text: "Loading speech model…" });
     const files = new Map<string, { loaded: number; total: number }>();
     asr = (await pipeline("automatic-speech-recognition", "onnx-community/whisper-base", {
         device: gpu ? "webgpu" : "wasm",

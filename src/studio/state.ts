@@ -74,6 +74,14 @@ type DeviceKind = "videoinput" | "audioinput";
 // it when the user picks it.
 const PHONE = /iphone|ipad|continuity/i;
 
+// A renamed phone ("Utsav's 15 Pro") doesn't say "iPhone", but Continuity
+// Camera always adds a "<phone> Desk View Camera" device, which gives away the
+// name its camera and mic are listed under.
+function phoneCheck(all: MediaDeviceInfo[]): (label: string) => boolean {
+    const names = all.map((d) => /^(.+?)\s+desk view camera$/i.exec(d.label)?.[1]).filter((n): n is string => !!n);
+    return (label) => PHONE.test(label) || /desk view/i.test(label) || names.some((n) => label.includes(n));
+}
+
 const PREF_KEY: Record<DeviceKind, string> = { videoinput: "quicksnap.camera", audioinput: "quicksnap.mic" };
 
 function loadPref(kind: DeviceKind): string {
@@ -112,11 +120,13 @@ export function chooseMic(id: string) {
 // The device to open when the user hasn't picked one: the system default,
 // unless that's a phone. undefined = let the browser decide.
 async function autoDevice(kind: DeviceKind): Promise<string | undefined> {
-    const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === kind && d.deviceId && d.label);
+    const all = await navigator.mediaDevices.enumerateDevices();
+    const isPhone = phoneCheck(all);
+    const list = all.filter((d) => d.kind === kind && d.deviceId && d.label);
     if (!list.length) return undefined; // no permission yet, labels are hidden
     const dflt = list.find((d) => d.deviceId === "default");
-    if (dflt && !PHONE.test(dflt.label)) return undefined;
-    return list.find((d) => d.deviceId !== "default" && d.deviceId !== "communications" && !PHONE.test(d.label))?.deviceId;
+    if (dflt && !isPhone(dflt.label)) return undefined;
+    return list.find((d) => d.deviceId !== "default" && d.deviceId !== "communications" && !isPhone(d.label))?.deviceId;
 }
 
 async function openDevice(kind: DeviceKind, pref: string, constraints: (id?: string) => MediaTrackConstraints): Promise<MediaStream> {
@@ -133,7 +143,7 @@ async function openDevice(kind: DeviceKind, pref: string, constraints: (id?: str
     // On the very first visit labels are hidden until permission is granted, so
     // the browser may have handed us the phone. Now we can see names: switch.
     const track = stream.getTracks()[0];
-    if (track && PHONE.test(track.label)) {
+    if (track && phoneCheck(await navigator.mediaDevices.enumerateDevices())(track.label)) {
         const alt = await autoDevice(kind);
         if (alt && alt !== track.getSettings().deviceId) {
             stopTracks(stream);
@@ -357,7 +367,7 @@ export function setReplay(on: boolean) {
     replayOn.value = false;
     if (!on) return;
     if (!replaySupported()) {
-        toast("The replay buffer needs Chrome or Edge.", "error");
+        toast("Replay needs Chrome or Edge.", "error");
         return;
     }
     const track = screenStream.value?.getVideoTracks()[0];

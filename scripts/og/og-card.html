@@ -1,187 +1,90 @@
 <!doctype html>
 <!--
-  Source for public/og.png (1200x630 share card). og-base.css is a pinned copy of
-  the landing styles. To re-render: run `npx vite`, then
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
-      --force-prefers-reduced-motion --window-size=1200,630 --force-device-scale-factor=2 \
-      --virtual-time-budget=4000 --screenshot=og2x.png http://localhost:5173/scripts/og/og-card.html
-    sips -z 630 1200 og2x.png --out public/og.png
+  Source for the 1200x630 share cards. It pulls the live hero demo out of
+  /index.html and styles it with the real landing.css, so the card always
+  matches the landing page. Render both cards with: npm run og
+    ?card=home    → public/og.jpg         (the finished edit; used by /)
+    ?card=studio  → public/og-studio.jpg  (mid-recording; used by /app/)
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <title>OG card</title>
-<link rel="stylesheet" href="/scripts/og/og-base.css" />
+<link rel="stylesheet" href="/src/landing/landing.css" />
 <style>
   html, body.landing { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
-  body.landing {
-    position: relative;
-    background:
-      radial-gradient(700px 520px at 88% 40%, rgba(100, 108, 255, 0.16), transparent 70%),
-      radial-gradient(520px 400px at 70% 105%, rgba(255, 25, 0, 0.10), transparent 70%),
-      radial-gradient(900px 500px at 10% -20%, rgba(255, 255, 255, 0.05), transparent 70%),
-      #121212;
-  }
+  body.landing { position: relative; background: radial-gradient(900px 500px at 10% -20%, rgba(255, 255, 255, 0.05), transparent 70%), var(--page); }
+  *, *::before, *::after { animation-play-state: paused !important; transition: none !important; }
 
-  /* ── Left: copy ── */
-  .og-copy { position: absolute; left: 72px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; z-index: 5; }
-  .og-copy .logo { font-size: 24px; gap: 12px; margin-bottom: 52px; }
-  .og-copy .logo svg { width: 30px; height: 30px; }
-  .og-copy h1 { margin: 0; font-size: 74px; line-height: 1.02; letter-spacing: -0.045em; font-weight: 500; }
-  .og-copy .sel::before, .og-copy .sel::after { animation: none; }
-  .og-copy .lede { margin-top: 30px; font-size: 23px; line-height: 1.45; color: var(--ink-2); max-width: 21em; }
-  .og-marker { margin-top: 40px; display: flex; align-items: center; gap: 12px; font-size: 16px; color: var(--ink-3); }
-  .og-marker b { font: 500 15px var(--mono); color: var(--warn); }
-  .og-marker i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); }
+  /* Left: copy, sized to stay legible when the card is shown at ~400px wide */
+  .og-copy { position: absolute; left: 68px; top: 0; bottom: 0; width: 500px; z-index: 5; display: flex; flex-direction: column; justify-content: center; }
+  .og-copy .logo { font-size: 26px; gap: 12px; margin-bottom: 44px; }
+  .og-copy .logo svg { width: 32px; height: 32px; }
+  .og-copy h1 { margin: 0; font-size: 76px; line-height: 1.02; letter-spacing: -0.045em; font-weight: 500; }
+  .og-copy .lede { margin: 28px 0 0; font-size: 25px; line-height: 1.4; max-width: 19em; }
+  .og-chips { margin-top: 36px; display: flex; gap: 10px; }
+  .og-chips span { height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); font-size: 17px; font-weight: 500; color: var(--ink-2); }
+  .og-chips .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--record, #ff1900); box-shadow: 0 0 0 4px rgba(255, 25, 0, 0.2); }
 
-  /* ── Right: two app windows, stacked ── */
-  .og-stack { position: absolute; left: 590px; top: 0; width: 900px; height: 630px; }
-  .og-win {
-    position: absolute; border-radius: 14px; overflow: hidden; background: var(--app);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 40px 90px rgba(0, 0, 0, 0.6);
-    font-size: 13px; color: var(--text); transform-origin: 0 0;
-  }
-  .og-tb { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--line); }
-  .og-tb > i { width: 11px; height: 11px; border-radius: 50%; background: #3d3d3f; }
-  .og-tb .og-t { margin-left: 12px; font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
-  .og-tb .og-t svg { width: 14px; height: 14px; }
-  .og-tb .og-r { margin-left: auto; display: flex; gap: 8px; }
-  .og-pill { height: 24px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; background: var(--raised); border: 1px solid var(--line-2); font-size: 12px; color: var(--text-2); }
-  .og-pill.og-acc { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-
-  /* Back: the Studio, recording */
-  .og-studio { left: 140px; top: 18px; width: 640px; height: 420px; transform: rotate(7deg) scale(0.78); }
-  .og-studio .og-body { display: grid; grid-template-columns: 1fr 190px; height: calc(100% - 38px); }
-  .og-studio .og-pv { position: relative; padding: 22px; }
-  .og-studio .og-pv .canvas { border-radius: 8px; box-shadow: 0 0 0 1px var(--line); }
-  .og-studio .rec-tag { opacity: 1; }
-  .og-studio .og-side { border-left: 1px solid var(--line); background: var(--panel); padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; }
-  .og-lbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .og-src { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; background: var(--raised); font-size: 12.5px; color: var(--text-2); }
-  .og-src .og-ok { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
-  .og-studio .og-ctl { margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
-  .og-clock { font: 500 30px/1 var(--mono); letter-spacing: -0.03em; color: #f2f2f3; }
-  .og-stop { display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 18px; border-radius: 20px; background: var(--record-btn); color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 0 0 6px rgba(255, 25, 0, 0.18); }
-  .og-stop i { width: 12px; height: 12px; border-radius: 3px; background: #fff; }
-  .og-meter { display: flex; align-items: center; gap: 3px; height: 22px; }
-  .og-meter i { width: 5px; border-radius: 2px; background: #2c2c2e; }
-  .og-meter i.og-on { background: var(--ok); }
-
-  /* Front: the Editor, edited */
-  .og-editor { left: 24px; top: 296px; width: 740px; height: 460px; transform: rotate(-6deg) scale(0.8); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08), -20px 40px 100px rgba(0, 0, 0, 0.75); }
-  .og-editor .og-viewer { height: 250px; padding: 18px 0 0 22px; background: var(--viewer); position: relative; overflow: hidden; }
-  .og-editor .og-viewer .canvas { width: 400px; border-radius: 8px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08); }
-  .og-editor .layer { transform: scale(1.35); }
-  .og-tc { position: absolute; left: 448px; width: 270px; top: 22px; display: flex; flex-direction: column; gap: 10px; }
-  .og-tc .og-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-2); padding: 8px 10px; border-radius: 7px; background: var(--panel); }
-  .og-tc .og-row b { color: var(--text); font-weight: 500; }
-  .og-tc .og-row.og-z { box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); color: var(--accent-text); }
-  .og-tl { position: relative; display: grid; grid-template-columns: 100px 1fr; grid-template-rows: 26px repeat(3, 46px); background: var(--panel); border-top: 1px solid var(--line); }
-  .og-ruler { grid-column: 1 / -1; display: flex; align-items: center; gap: 0; padding-left: 100px; border-bottom: 1px solid var(--line); font: 10.5px var(--mono); color: var(--muted); }
-  .og-ruler span { flex: 1; padding-left: 6px; border-left: 1px solid var(--line); height: 100%; display: flex; align-items: center; }
-  .og-tl .th { font-size: 12px; padding: 0 12px; gap: 8px; }
-  .og-tl .th .ic { width: 14px; height: 14px; }
-  .og-tl .item { top: 7px; bottom: 7px; font-size: 12px; padding: 0 10px; border-radius: 6px; }
-  .og-tl .wave { left: 84px; width: calc(98% - 84px); }
-  .og-tl .playhead { left: calc(100px + (100% - 100px) * 0.36); top: 0; }
-  .og-tl .playhead::before { left: -6px; width: 14px; height: 11px; }
+  /* Right: the real editor window, bleeding off the right edge like the hero */
+  .og-demo { position: absolute; left: 610px; top: 0; width: 900px; height: 630px; }
+  .og-demo .demo { position: absolute; left: 0; top: 50%; margin: 0; transform: translateY(-50%); }
+  .og-demo .demo[data-enter] { animation: none; }
+  .og-demo .bokeh { inset: -30% -20% -30% -60%; -webkit-mask-image: none; mask-image: none; }
 </style>
 </head>
 <body class="landing">
   <div class="og-copy">
     <span class="logo">
       <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M5 0h6v1h-6zM5 1h7v1h-7zM3 2h2v1h-2zM10 2h2v1h-2zM3 3h1v1h-1zM11 3h1v1h-1zM2 4h2v1h-2zM2 5h2v1h-2zM12 5h2v1h-2zM2 6h2v1h-2zM12 6h2v1h-2zM2 7h2v1h-2zM12 7h2v1h-2zM2 8h2v1h-2zM8 8h2v1h-2zM12 8h2v1h-2zM2 9h2v1h-2zM8 9h2v1h-2zM12 9h2v1h-2zM2 10h2v1h-2zM9 10h5v1h-5zM3 11h2v1h-2zM10 11h4v1h-4zM3 12h3v1h-3zM10 12h4v1h-4zM5 13h9v1h-9zM6 14h5v1h-5zM13 14h3v1h-3zM14 15h2v1h-2z" /><path fill="#ff1900" d="M12 0h4v1h-4zM12 1h4v1h-4zM12 2h4v1h-4zM12 3h4v1h-4zM12 4h4v1h-4z" /></svg>
-      Quicksnap
+      <span id="brand">Quicksnap</span>
     </span>
-    <h1>Screen recordings that look <span class="sel"><span>edited.</span></span></h1>
-    <p class="lede">Record, zoom, caption and export in one browser tab. Nothing leaves your device.</p>
-    <p class="og-marker"><b>00:00</b>Free<i></i>No sign-up<i></i>No watermark</p>
+    <h1 id="title"></h1>
+    <p class="lede" id="lede"></p>
+    <p class="og-chips" id="chips"></p>
   </div>
+  <div class="og-demo" id="slot"></div>
 
-  <div class="og-stack">
-    <!-- Back: Studio, mid-take -->
-    <div class="og-win og-studio">
-      <div class="og-tb"><i></i><i></i><i></i><span class="og-t"><span class="rec-dot" style="width:8px;height:8px;border-radius:50%;background:var(--record)"></span>Studio · Screen + bubble</span></div>
-      <div class="og-body">
-        <div class="og-pv">
-          <div class="og-ctl">
-            <span class="og-stop"><i></i>Stop</span>
-            <span class="og-clock">00:00:42</span>
-            <span class="og-meter" id="meter"></span>
-          </div>
-          <div class="canvas" data-phase="studio">
-            <div class="layer" style="transform:none">
-              <i class="bg"></i>
-              <div class="frame"><div class="shot">
-                <div class="b-chrome"><i></i><i></i><i></i><span class="b-url">acme.app/reports</span></div>
-                <div class="b-page">
-                  <div class="b-head"><div><small>Reports</small><b>Weekly overview</b></div><span class="b-share">Share report</span></div>
-                  <div class="b-stats"><div><small>Visitors</small><b>48.2k</b><em>+12%</em></div><div><small>Sign-ups</small><b>3,914</b><em>+8%</em></div><div><small>Churn</small><b>1.9%</b><em>−0.4%</em></div></div>
-                </div>
-              </div></div>
-            </div>
-            <div class="bubble"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
-            <span class="rec-tag"><i></i>REC</span>
-          </div>
-        </div>
-        <div class="og-side">
-          <span class="og-lbl">Sources</span>
-          <span class="og-src">Screen<span class="og-ok"></span></span>
-          <span class="og-src">Camera<span class="og-ok"></span></span>
-          <span class="og-src">Microphone<span class="og-ok"></span></span>
-          <span class="og-lbl" style="margin-top:6px">Layout</span>
-          <span class="og-src" style="color:var(--accent-text);background:var(--accent-soft)">Camera bubble</span>
-        </div>
-      </div>
-    </div>
+<script type="module">
+  const CARDS = {
+    home: {
+      title: 'Screen recordings that look <span class="sel"><span>edited.</span></span>',
+      lede: "Record, zoom, caption and export in one browser tab.",
+      chips: ["Free", "No sign-up", "No upload"],
+      phase: "edit",
+    },
+    studio: {
+      brand: "Quicksnap Studio",
+      title: 'Hit record. <span class="sel"><span>Ship it.</span></span>',
+      lede: "Screen, camera and mic in your browser. Nothing leaves your device.",
+      chips: ['<i class="dot"></i>Record', "Zoom", "Caption"],
+      phase: "rec",
+    },
+  };
+  const card = CARDS[new URLSearchParams(location.search).get("card")] ?? CARDS.home;
+  if (card.brand) document.getElementById("brand").textContent = card.brand;
+  document.getElementById("title").innerHTML = card.title;
+  document.getElementById("lede").textContent = card.lede;
+  document.getElementById("chips").innerHTML = card.chips.map((c) => `<span>${c}</span>`).join("");
 
-    <!-- Front: Editor, the finished edit -->
-    <div class="og-win og-editor" data-suggest data-accept data-caps data-captions>
-      <div class="og-tb"><i></i><i></i><i></i><span class="og-t">product-walkthrough</span><span class="og-r"><span class="og-pill">Captions</span><span class="og-pill og-acc">Export</span></span></div>
-      <div class="og-viewer">
-        <div class="canvas">
-          <div class="layer">
-            <i class="bg"></i>
-            <div class="frame"><div class="shot">
-              <div class="b-chrome"><i></i><i></i><i></i><span class="b-url">acme.app/reports</span></div>
-              <div class="b-page">
-                <div class="b-head"><div><small>Reports</small><b>Weekly overview</b></div><span class="b-share">Share report</span></div>
-                <div class="b-stats"><div><small>Visitors</small><b>48.2k</b><em>+12%</em></div><div><small>Sign-ups</small><b>3,914</b><em>+8%</em></div><div><small>Churn</small><b>1.9%</b><em>−0.4%</em></div></div>
-                <div class="b-chart"><svg viewBox="0 0 200 60" preserveAspectRatio="none"><path class="grid" d="M0 15H200M0 30H200M0 45H200" /><path class="area" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7 V60 H0Z" /><path class="line" pathLength="1" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7" /></svg></div>
-              </div>
-              <div class="pop"><b>Share “Weekly overview”</b><div class="pop-link"><span>acme.app/r/weekly</span><em>Copy link</em></div><div class="pop-people"><i></i><i></i><i></i><span>Design team · 8 people</span></div></div>
-              <svg class="p-ptr" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9.5 19z" /></svg>
-            </div></div>
-          </div>
-          <div class="bubble"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
-          <p class="caption"><span>Hit</span> <span>Share</span> <span>and</span> <span>the</span> <span>team</span> <span>gets</span> <span>it</span></p>
-        </div>
-        <div class="og-tc">
-          <span class="og-lbl">Inspector</span>
-          <span class="og-row og-z">Zoom<b style="color:inherit">2×</b></span>
-          <span class="og-row">Background<b>Sunset</b></span>
-          <span class="og-row">Captions<b>On device</b></span>
-        </div>
-      </div>
-      <div class="og-tl">
-        <div class="og-ruler"><span>0:00</span><span>0:10</span><span>0:20</span><span>0:30</span><span>0:40</span></div>
-        <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18v12H3z M8 6v12 M16 6v12" /></svg>Video</span>
-        <div class="lane"><span class="item clip">Recording<svg class="wave" id="wave" viewBox="0 0 120 20" preserveAspectRatio="none"></svg></span></div>
-        <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>Zoom</span>
-        <div class="lane"><span class="item zoom"><span class="z-sug">Suggested</span><span class="z-on">Zoom 2×</span></span></div>
-        <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
-        <div class="lane"><span class="item cap" style="left: 20%; width: 10%">Hit Share</span><span class="item cap" style="left: 31%; width: 13%">and the team</span><span class="item cap" style="left: 45%; width: 9%">gets it</span></div>
-        <i class="playhead"></i>
-      </div>
-    </div>
-  </div>
+  // Clone the hero demo from the landing page itself.
+  const html = await (await fetch("/")).text();
+  const demo = new DOMParser().parseFromString(html, "text/html").getElementById("demo");
+  demo.dataset.phase = card.phase;
+  if (card.phase === "rec") {
+    for (const k of ["suggest", "accept", "caps", "zoom", "captions", "done"]) delete demo.dataset[k];
+    demo.querySelector(".clock").textContent = "00:00:42";
+    demo.querySelector(".rec-label").textContent = "Stop";
+  }
+  document.getElementById("slot").append(demo);
 
-<script>
-  const w = document.getElementById("wave"); let d = "";
-  for (let i = 0; i < 120; i += 1.5) { const h = 3 + Math.abs(Math.sin(i * 0.37) * Math.cos(i * 0.11)) * 14; d += `M${i} ${10 - h / 2}h0.9v${h}h-0.9z`; }
-  w.innerHTML = `<path d="${d}" />`;
-  const m = document.getElementById("meter"); const hs = [8, 14, 20, 16, 22, 12, 18, 10, 6, 6, 6, 6];
-  m.innerHTML = hs.map((h, i) => `<i class="${i < 8 ? "og-on" : ""}" style="height:${h}px"></i>`).join("");
+  // Fit the 1080px-wide window to the card's height, leaving a margin.
+  const win = demo.querySelector(".win");
+  const k = Math.min(0.78, 540 / win.offsetHeight);
+  demo.style.setProperty("--k", String(k));
+  demo.style.setProperty("--h", `${Math.round(win.offsetHeight * k)}px`);
+  await document.fonts.ready;
+  document.documentElement.dataset.ready = "";
 </script>
 </body>
 </html>

@@ -106,7 +106,7 @@ export class ReplayBuffer {
         await this.aenc?.flush();
         const video = this.video.slice();
         const audio = this.audio.slice();
-        if (!video.length || !this.videoConfig) throw new Error("Replay buffer is empty");
+        if (!video.length || !this.videoConfig) throw new Error("Nothing has been captured yet.");
         const t0 = video[0].chunk.timestamp;
         const path = `${projectId}/replay.webm`;
         const writer = await createWriter(path);

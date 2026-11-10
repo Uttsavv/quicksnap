@@ -230,9 +230,9 @@ function Sources() {
                             </button>
                         )}
                     </div>
-                    <Check label="Include tab / system audio" checked={S.systemAudioOn.value} disabled={live} onChange={(v) => (S.systemAudioOn.value = v)} />
-                    {S.systemAudioOn.value && S.isMac && <div class="small warn-text">macOS can only share a browser tab's audio. Share a tab to include its sound.</div>}
-                    {screen && S.systemAudioOn.value && !screen.getAudioTracks().length && <div class="small muted">No audio came with this share. Re-share and turn on "Share audio".</div>}
+                    <Check label={S.isMac ? "Include tab audio" : "Include system or tab audio"} checked={S.systemAudioOn.value} disabled={live} onChange={(v) => (S.systemAudioOn.value = v)} />
+                    {S.systemAudioOn.value && S.isMac && <div class="small warn-text">On a Mac, sound only comes through when you share a browser tab, not a window or the whole screen.</div>}
+                    {screen && S.systemAudioOn.value && !screen.getAudioTracks().length && <div class="small muted">This share has no sound. Share again and turn on “Share audio” in the picker.</div>}
                 </div>
 
                 <div class="group source">
@@ -384,7 +384,7 @@ function MixerPanel() {
                         />
                     </div>
                     <div class="spread">
-                        <span class="small">Screen fps</span>
+                        <span class="small">Screen frame rate</span>
                         <Segmented
                             label="Screen frame rate"
                             value={String(S.frameRate.value) as "30" | "60"}
@@ -412,7 +412,7 @@ function MixerPanel() {
                     </div>
                     {replaySupported() && (
                         <Slider
-                            label="Replay buffer"
+                            label="Replay length"
                             min={30}
                             max={600}
                             step={30}
@@ -485,7 +485,7 @@ export function Studio() {
                         </button>
                     )}
                     {replaySupported() && (
-                        <button class="btn" type="button" aria-pressed={S.replayOn.value} disabled={!S.screenStream.value} onClick={() => S.setReplay(!S.replayOn.value)} title={S.screenStream.value ? undefined : "Choose a screen first"}>
+                        <button class="btn" type="button" aria-pressed={S.replayOn.value} disabled={!S.screenStream.value} onClick={() => S.setReplay(!S.replayOn.value)} title={S.screenStream.value ? "Keep the last few minutes so you can save them afterwards" : "Choose a screen first"}>
                             <Icon name="replay" /> Replay {S.replayOn.value ? `· ${Math.round(S.replayBuffered.value)} s` : ""}
                         </button>
                     )}

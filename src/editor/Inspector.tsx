@@ -84,7 +84,7 @@ function StyleTab({ player }: { player: Player }) {
                 </div>
                 {bg.kind === "solid" && (
                     <label class="check">
-                        <span>Custom colour</span>
+                        <span>Custom color</span>
                         <input type="color" value={bg.color} onChange={(e) => setStyle(() => ({ background: { kind: "solid", color: (e.target as HTMLInputElement).value } }))} />
                     </label>
                 )}
@@ -370,7 +370,7 @@ function AudioTab() {
             <div class="group">
                 <h3 class="group-title">Remove silences</h3>
                 {!A.levels.value ? (
-                    <span class="small muted">Analysing audio…</span>
+                    <span class="small muted">Analyzing audio…</span>
                 ) : (
                     <>
                         <Slider label="Quieter than" min={-60} max={-25} value={thr} display={`${thr} dB`} onInput={setThr} />

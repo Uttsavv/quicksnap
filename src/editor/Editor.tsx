@@ -434,7 +434,7 @@ export function Editor({ id }: { id: string }) {
                             )}
                         </div>
                         <div class="row" style={{ gap: "4px" }}>
-                            <button class="btn icon ghost" type="button" aria-label="Go to start" title="Start (Home)" onClick={() => seekTo(0)}>
+                            <button class="btn icon ghost" type="button" aria-label="Go to start" title="Go to start (Home)" onClick={() => seekTo(0)}>
                                 <Icon name="start" size={14} />
                             </button>
                             <button class="btn icon ghost" type="button" aria-label="Back one frame" title="Back one frame (←)" onClick={() => stepFrame(-1)}>
@@ -446,7 +446,7 @@ export function Editor({ id }: { id: string }) {
                             <button class="btn icon ghost" type="button" aria-label="Forward one frame" title="Forward one frame (→)" onClick={() => stepFrame(1)}>
                                 <Icon name="stepFwd" size={14} />
                             </button>
-                            <button class="btn icon ghost" type="button" aria-label="Go to end" title="End (End)" onClick={() => seekTo(p.duration)}>
+                            <button class="btn icon ghost" type="button" aria-label="Go to end" title="Go to end (End)" onClick={() => seekTo(p.duration)}>
                                 <Icon name="end" size={14} />
                             </button>
                         </div>

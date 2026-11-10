@@ -40,7 +40,7 @@ export async function transcribe(audioPath: string, onProgress: (p: CaptionProgr
             worker.onmessage = (e: MessageEvent<WhisperMessage>) => {
                 const m = e.data;
                 if (m.type === "status") onProgress({ stage: m.text, progress: 0 });
-                else if (m.type === "download") onProgress({ stage: "Downloading speech model (once)…", progress: m.progress });
+                else if (m.type === "download") onProgress({ stage: "Downloading the speech model (first time only)…", progress: m.progress });
                 else if (m.type === "progress") onProgress({ stage: "Transcribing…", progress: m.progress });
                 else if (m.type === "segment") captions.push(...splitSegment(m.start, m.end, m.text));
                 else if (m.type === "done") resolve();

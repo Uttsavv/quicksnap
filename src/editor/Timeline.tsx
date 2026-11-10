@@ -85,7 +85,7 @@ function Waveform({ width }: { width: number }) {
             ctx.fillRect(x, 40 - h / 2, 1, h);
         }
     }, [lv, width, clips, p.duration]);
-    if (!lv) return <span class="small muted" style={{ position: "absolute", left: "10px", top: "12px" }}>Analysing audio…</span>;
+    if (!lv) return <span class="small muted" style={{ position: "absolute", left: "10px", top: "12px" }}>Analyzing audio…</span>;
     return <canvas ref={ref} class="tl-wave" aria-hidden="true" />;
 }
 
