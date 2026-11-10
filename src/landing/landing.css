@@ -123,9 +123,13 @@ h1 { margin-top: 28px; font-size: clamp(44px, 5.2vw, 76px); line-height: 1.02; l
 [data-enter] > :nth-child(3) { animation-delay: 160ms; }
 [data-enter] > :nth-child(4) { animation-delay: 220ms; }
 [data-enter] > :nth-child(5) { animation-delay: 280ms; }
-.demo[data-enter] { animation: l-up 900ms var(--enter) 200ms both; }
+/* The headline and the demo are the page's largest paint (LCP). They rise but
+   never start invisible, so the browser can count them on the first frame. */
+.hero-copy > h1 { animation-name: l-rise; }
+.demo[data-enter] { animation: l-rise 900ms var(--enter) both; }
 .demo[data-enter] > * { animation: none; }
 @keyframes l-up { from { opacity: 0; transform: translateY(12px); } }
+@keyframes l-rise { from { transform: translateY(12px); } }
 
 /* ══ Demo: the whole editor, with focus pulls ════════════════ */
 /* The full Quicksnap editor sits in a panel that bleeds off the right edge,

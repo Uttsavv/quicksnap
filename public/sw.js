@@ -12,6 +12,9 @@ self.addEventListener("activate", (e) => {
         caches
             .keys()
             .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+            // Navigation preload starts the page request while the worker boots,
+            // so a cold service worker never delays the first paint.
+            .then(() => self.registration.navigationPreload?.enable())
             .then(() => self.clients.claim()),
     );
 });
@@ -42,7 +45,8 @@ self.addEventListener("fetch", (e) => {
     // Pages: network first so deploys show up, cache as the offline fallback.
     if (req.mode === "navigate") {
         e.respondWith(
-            fetch(req)
+            Promise.resolve(e.preloadResponse)
+                .then((pre) => pre || fetch(req))
                 .then((res) => {
                     const copy = res.clone();
                     caches.open(CACHE).then((c) => c.put(url.pathname, copy));

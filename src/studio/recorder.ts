@@ -2,7 +2,6 @@
 // arrive. Nothing here depends on the page being visible, so switching to the
 // app you're recording doesn't freeze the capture.
 
-import { ALL_FORMATS, BlobSource, Conversion, Input, Mp4OutputFormat, Output, StreamTarget, WebMOutputFormat } from "mediabunny";
 import type { RecordingEvent, SourceFile, SourceKind } from "../lib/types";
 import { createWriter, deleteFile, readFile, type FileWriter } from "../storage/files";
 
@@ -146,6 +145,7 @@ export class RecordingSession {
  */
 export async function finalizeSource(src: SourceFile, onProgress?: (p: number) => void): Promise<SourceFile> {
     const file = await readFile(src.path);
+    const { ALL_FORMATS, BlobSource, Conversion, Input, Mp4OutputFormat, Output, StreamTarget, WebMOutputFormat } = await import("mediabunny");
     const isMp4 = src.mimeType.includes("mp4");
     const outPath = src.path.replace(".raw.", ".");
     try {

@@ -21,9 +21,30 @@ function dropUnusedOrtWasm(): Plugin {
     };
 }
 
+// Inline each page's stylesheet into its HTML. Both are small (7–11 KB
+// gzipped), and inlining saves a render-blocking round trip before first paint,
+// which is most of the LCP budget on a slow connection.
+function inlineCss(): Plugin {
+    return {
+        name: "inline-css",
+        apply: "build",
+        transformIndexHtml: {
+            order: "post",
+            handler(html, ctx) {
+                const bundle = ctx.bundle;
+                if (!bundle) return html;
+                return html.replace(/<link rel="stylesheet"[^>]*href="\/(assets\/[^"]+\.css)"[^>]*>/g, (tag, file: string) => {
+                    const asset = bundle[file];
+                    return asset?.type === "asset" ? `<style>${String(asset.source)}</style>` : tag;
+                });
+            },
+        },
+    };
+}
+
 export default defineConfig({
     base: "/",
-    plugins: [preact(), dropUnusedOrtWasm()],
+    plugins: [preact(), dropUnusedOrtWasm(), inlineCss()],
     server: { headers: isolationHeaders },
     preview: { headers: isolationHeaders },
     worker: { format: "es" },

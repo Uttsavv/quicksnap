@@ -1,4 +1,5 @@
-import { ALL_FORMATS, BlobSource, Input, VideoSampleSink } from "mediabunny";
+// mediabunny is loaded on first use so it stays out of the first-paint bundle.
+const media = () => import("mediabunny");
 import { projects } from "../storage/db";
 import { deleteDir, readFile, writeFile } from "../storage/files";
 import { recordedScenes, startScene } from "./scenes";
@@ -48,7 +49,7 @@ export function defaultName(t: number) {
 }
 
 export async function openInput(path: string) {
-    const file = await readFile(path);
+    const [file, { Input, BlobSource, ALL_FORMATS }] = await Promise.all([readFile(path), media()]);
     return new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
 }
 
@@ -59,6 +60,7 @@ export async function makeThumbnail(p: Project): Promise<string | undefined> {
         const input = await openInput(src.path);
         const track = await input.getPrimaryVideoTrack();
         if (!track) return;
+        const { VideoSampleSink } = await media();
         const sink = new VideoSampleSink(track);
         const sample = await sink.getSample(Math.min(1, p.duration / 2));
         if (!sample) return;

@@ -2,7 +2,6 @@
 // encoded in memory, and saves them on demand. Uses WebCodecs directly so we
 // can always cut on a keyframe. Chrome/Edge only (needs MediaStreamTrackProcessor).
 
-import { EncodedAudioPacketSource, EncodedPacket, EncodedVideoPacketSource, Output, StreamTarget, WebMOutputFormat } from "mediabunny";
 import { createWriter } from "../storage/files";
 
 interface Packet<M> {
@@ -110,6 +109,7 @@ export class ReplayBuffer {
         const t0 = video[0].chunk.timestamp;
         const path = `${projectId}/replay.webm`;
         const writer = await createWriter(path);
+        const { EncodedAudioPacketSource, EncodedPacket, EncodedVideoPacketSource, Output, StreamTarget, WebMOutputFormat } = await import("mediabunny");
         const output = new Output({
             format: new WebMOutputFormat(),
             target: new StreamTarget(
