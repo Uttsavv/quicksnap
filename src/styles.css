@@ -264,7 +264,8 @@ input[type="color"] { width: 36px; height: 24px; border: 1px solid var(--line-2)
 .play { --ctl: 34px; border-radius: 50%; background: var(--accent); border-color: var(--accent); color: #fff; }
 .play:hover:not(:disabled) { background: var(--accent-hover); }
 .splitter { position: absolute; left: 0; right: 0; top: calc(-1 * var(--gap)); height: var(--gap); cursor: row-resize; z-index: 6; }
-.splitter:hover, .splitter.active { background: var(--accent); opacity: .6; }
+.splitter::after { content: ""; position: absolute; left: 50%; top: 50%; width: 40px; height: 3px; transform: translate(-50%, -50%); border-radius: 2px; background: var(--line-2); }
+.splitter:hover::after, .splitter.active::after { background: var(--accent); width: 64px; }
 
 .inspector-tabs { flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
 .inspector-tabs button {

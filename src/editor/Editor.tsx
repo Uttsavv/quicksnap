@@ -14,6 +14,14 @@ import * as St from "./store";
 import { Timeline } from "./Timeline";
 
 const PREVIEW_SHORT = 720;
+const TL_KEY = "qs.tlHeight.v2"; // v2: the old, shorter default is not reused
+
+/** Toolbar 40 + ruler 27 + Clips 45 + Zoom 35 + Layout 35 + Captions 35 + Audio 45 + padding. */
+const TIMELINE_CONTENT = 40 + 27 + 45 + 35 + 35 + 35 + 45 + 12;
+
+function defaultTimelineHeight() {
+    return Math.round(Math.min(window.innerHeight * 0.6, Math.max(TIMELINE_CONTENT, window.innerHeight * 0.45)));
+}
 
 function isTyping(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
@@ -28,14 +36,16 @@ export function Editor({ id }: { id: string }) {
     const [exporting, setExporting] = useState(false);
     const [editingName, setEditingName] = useState(false);
     const playerRef = useRef<Player | null>(null);
+    // Resolve-style split: the timeline gets ~45% of the height, and at least
+    // enough for the ruler plus every track, so nothing starts cut off.
     const [tlHeight, setTlHeight] = useState(() => {
         let v = 0;
         try {
-            v = Number(localStorage.getItem("qs.tlHeight"));
+            v = Number(localStorage.getItem(TL_KEY));
         } catch {
             /* storage unavailable */
         }
-        return v >= 160 ? v : Math.round(Math.min(300, Math.max(210, window.innerHeight * 0.28)));
+        return v >= 200 ? v : defaultTimelineHeight();
     });
     const [dragging, setDragging] = useState(false);
     const startResize = (e: PointerEvent) => {
@@ -46,7 +56,7 @@ export function Editor({ id }: { id: string }) {
         const h0 = tlHeight;
         let h = h0;
         const move = (ev: PointerEvent) => {
-            h = Math.round(Math.min(window.innerHeight * 0.7, Math.max(160, h0 - (ev.clientY - y0))));
+            h = Math.round(Math.min(window.innerHeight * 0.7, Math.max(200, h0 - (ev.clientY - y0))));
             setTlHeight(h);
         };
         const up = () => {
@@ -54,7 +64,7 @@ export function Editor({ id }: { id: string }) {
             el.removeEventListener("pointerup", up);
             setDragging(false);
             try {
-                localStorage.setItem("qs.tlHeight", String(h));
+                localStorage.setItem(TL_KEY, String(h));
             } catch {
                 /* storage unavailable */
             }
@@ -469,7 +479,16 @@ export function Editor({ id }: { id: string }) {
                         role="separator"
                         aria-orientation="horizontal"
                         aria-label="Resize timeline"
+                        title="Drag to resize · double-click to reset"
                         onPointerDown={startResize}
+                        onDblClick={() => {
+                            setTlHeight(defaultTimelineHeight());
+                            try {
+                                localStorage.removeItem(TL_KEY);
+                            } catch {
+                                /* storage unavailable */
+                            }
+                        }}
                     />
                     <Timeline player={player} />
                 </section>

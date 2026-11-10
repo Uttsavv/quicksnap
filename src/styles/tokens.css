@@ -1,0 +1,165 @@
+/* Quicksnap design tokens — the single source of every value the UI uses.
+   Components reference these, never raw values. See docs/DESIGN.md and the
+   live reference at #/design.
+
+   Layers:
+     1. Brand      — the two colours the product is recognised by
+     2. Surface    — the panel stack, from the app floor up to hovered controls
+     3. Content    — text, lines, status
+     4. Timeline   — one colour pair per track kind
+     5. Scale      — space, radius, type, elevation, layering
+     6. Motion     — durations, easings, stagger */
+
+:root {
+    /* ── 1. Brand ───────────────────────────────────────────── */
+    --accent: #646cff;
+    --accent-hover: #747bff;
+    --accent-ink: #ffffff;
+    --record: #ff1900;
+    --record-btn: #e01600; /* white text on it passes 4.5:1 */
+
+    /* ── 2–4. Colour, dark (default) ────────────────────────── */
+    --app: #1a1a1a;
+    --panel: #242424;
+    --raised: #2e2e2e;
+    --hover: #383838;
+    --viewer: #121212;
+    --scrim: rgba(0, 0, 0, 0.55);
+
+    --line: #333333;
+    --line-2: #404040;
+    --text: rgba(255, 255, 255, 0.87);
+    --text-2: rgba(255, 255, 255, 0.72);
+    --muted: #9b9b9b;
+
+    --accent-soft: rgba(100, 108, 255, 0.2);
+    --accent-text: #9aa0ff;
+    --warn: #e0a24a;
+    --ok: #4fc27c;
+
+    --clip: #3a3f6b;
+    --clip-text: #dfe1ff;
+    --zoom: #646cff;
+    --layout: #7a5a2c;
+    --layout-text: #f6dcb4;
+    --caption: #2f5a3f;
+    --caption-text: #cdeed8;
+    --wave: #4fc27c;
+    --wave-off: #4a4a4a;
+
+    /* ── 5. Scale ───────────────────────────────────────────── */
+    /* Space: a 2px base, used for gap / padding / margin. */
+    --sp-1: 2px;
+    --sp-2: 4px;
+    --sp-3: 6px;
+    --sp-4: 8px;
+    --sp-5: 10px;
+    --sp-6: 12px;
+    --sp-7: 14px;
+    --sp-8: 16px;
+    --sp-10: 20px;
+    --sp-12: 24px;
+    --gap: var(--sp-3); /* between panels in the app frame */
+
+    --r-xs: 2px;
+    --r-sm: 4px;
+    --r: 6px;
+    --r-lg: 8px;
+    --r-xl: 12px;
+    --r-full: 999px;
+
+    --ctl: 30px; /* control height in dense panels */
+    --ctl-lg: 36px;
+
+    --font: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --fs-micro: 10.5px; /* track-item tags, kbd, tab labels */
+    --fs-label: 11px; /* uppercase panel & group titles */
+    --fs-xs: 11.5px;
+    --fs-sm: 12px;
+    --fs-ui: 12.5px; /* buttons, inputs */
+    --fs-base: 13px;
+    --fs-md: 14px;
+    --fs-lg: 15px;
+    --fs-xl: 18px;
+    --fs-2xl: 20px;
+    --fs-display: 110px; /* the countdown */
+    --tracking-label: 0.06em;
+
+    --shadow-1: 0 8px 24px rgba(0, 0, 0, 0.25); /* lifted card */
+    --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.35); /* toast, floating bar */
+    --shadow-3: 0 30px 80px rgba(0, 0, 0, 0.45); /* modal */
+    --ring: 0 0 0 1px var(--line-2);
+
+    --z-track: 2;
+    --z-sticky: 5;
+    --z-cinema: 40;
+    --z-modal: 50;
+    --z-toast: 100;
+
+    /* ── 6. Motion ──────────────────────────────────────────── */
+    /* Durations: press < state < enter < emphasis. Exits run at ~70%. */
+    --dur-press: 90ms;
+    --dur-state: 160ms; /* hover, selection, colour changes */
+    --dur-enter: 240ms; /* panels, toasts, dialogs appearing */
+    --dur-emph: 420ms; /* a moment worth noticing: countdown, success */
+    --dur-loop: 1600ms; /* ambient loops: loader, live dot */
+    --stagger: 40ms; /* delay step between siblings entering together */
+
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); /* things arriving */
+    --ease-in: cubic-bezier(0.4, 0, 1, 1); /* things leaving */
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* things moving across */
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* small, playful overshoot */
+
+    --rise: 6px; /* how far things travel when they enter */
+
+    font-family: var(--font);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --app: #e9e9ec;
+        --panel: #ffffff;
+        --raised: #f9f9f9;
+        --hover: #f0f0f3;
+        --viewer: #1a1a1a;
+        --scrim: rgba(20, 22, 30, 0.45);
+        --line: #e4e4e8;
+        --line-2: #dddddd;
+        --text: #213547;
+        --text-2: #3b4d5e;
+        --muted: #5f6b7a;
+        --accent-soft: rgba(100, 108, 255, 0.12);
+        --accent-text: #4a52e0;
+        --warn: #a8640d;
+        --ok: #1f8a4c;
+        --clip: #dfe1ff;
+        --clip-text: #262b6b;
+        --layout: #f6dcb4;
+        --layout-text: #5b3b0c;
+        --caption: #cdeed8;
+        --caption-text: #174a2a;
+        --wave: #2aa35a;
+        --wave-off: #c9c9cf;
+        --shadow-1: 0 8px 24px rgba(20, 22, 30, 0.12);
+        --shadow-2: 0 10px 30px rgba(20, 22, 30, 0.18);
+        --shadow-3: 0 30px 80px rgba(20, 22, 30, 0.25);
+        color-scheme: light;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --dur-press: 0ms;
+        --dur-state: 0ms;
+        --dur-enter: 0ms;
+        --dur-emph: 0ms;
+        --stagger: 0ms;
+        --rise: 0px;
+    }
+}
