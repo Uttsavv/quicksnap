@@ -23,6 +23,8 @@ export class Player {
     private disposed = false;
     playing = false;
     src = 0;
+    /** J/K/L shuttle multiplier on top of each clip's own speed. */
+    shuttle = 1;
 
     constructor(
         private getProject: () => Project | null,
@@ -131,11 +133,11 @@ export class Player {
         const p = this.getProject();
         if (!p) return;
         const clip = clipAt(p.timeline.clips, this.src);
-        const rate = clip?.speed ?? 1;
+        const rate = (clip?.speed ?? 1) * this.shuttle;
         for (const e of this.elements) e.playbackRate = rate;
         if (this.audio) {
             // Sped-up or slowed clips play silent; the export does the same.
-            const vol = clip && clip.enabled && rate === 1 ? clip.volume : 0;
+            const vol = clip && clip.enabled && (clip.speed ?? 1) === 1 ? clip.volume : 0;
             if (this.gain) this.gain.gain.value = vol;
             else this.audio.volume = Math.min(1, vol);
         }

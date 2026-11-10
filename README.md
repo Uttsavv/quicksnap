@@ -61,6 +61,9 @@ same file, so deploying there needs no changes.
 | `⌥R` | Start/stop recording | `Space` | Play/pause |
 | `⌥P` | Pause/resume | `S` | Split at playhead |
 | `M` | Marker | `⌫` | Delete selection, or cut/restore the clip under the playhead |
-| `1`–`4` | Switch scene | `Z` / `L` / `M` | Add zoom / layout / marker |
+| `1`–`4` | Switch scene | `Z` / `C` / `M` | Add zoom / camera layout / marker |
+| | | `J` `K` `L` | Back 5 s / pause / play (press again for 2×, 4×) |
+| | | `F` | Full-screen viewer |
+| | | `⇧Z` | Fit timeline |
 | | | `⌘Z`, `⇧⌘Z` | Undo, redo |
 | | | `←` `→` | Step one frame (`⇧` = 1 s) |

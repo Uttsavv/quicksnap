@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { href } from "../app/router";
 import { ExportDialog } from "../export/ExportDialog";
-import { clipAt, formatTime, outputDuration, skipCut, sourceToOutput } from "../lib/timeline";
+import { clipAt, formatTimecode, outputDuration, skipCut, sourceToOutput } from "../lib/timeline";
 import { canvasToScreen, layoutAt, outputSize, zoomAt } from "../render/compositor";
 import { projects } from "../storage/db";
 import { errorText, Segmented, toast } from "../ui/controls";
@@ -29,8 +29,13 @@ export function Editor({ id }: { id: string }) {
     const [editingName, setEditingName] = useState(false);
     const playerRef = useRef<Player | null>(null);
     const [tlHeight, setTlHeight] = useState(() => {
-        const v = Number(localStorage.getItem("qs.tlHeight"));
-        return v >= 160 ? v : 300;
+        let v = 0;
+        try {
+            v = Number(localStorage.getItem("qs.tlHeight"));
+        } catch {
+            /* storage unavailable */
+        }
+        return v >= 160 ? v : Math.round(Math.min(300, Math.max(210, window.innerHeight * 0.28)));
     });
     const [dragging, setDragging] = useState(false);
     const startResize = (e: PointerEvent) => {
@@ -97,21 +102,67 @@ export function Editor({ id }: { id: string }) {
     }, [p, player]);
 
     // Attach the canvas (size follows the aspect ratio).
-    const [cw, ch] = p ? outputSize(p.style.aspect, PREVIEW_SHORT) : [1280, 720];
+    const [cw, ch] = p ? outputSize(p.style.aspect, St.cinema.value ? 1080 : PREVIEW_SHORT) : [1280, 720];
     useEffect(() => {
         if (player && canvas.current) player.attach(canvas.current);
     }, [player, cw, ch, ready]);
 
-    const togglePlay = async () => {
+    const [shuttle, setShuttle] = useState(1);
+    const pause = () => {
         if (!player) return;
-        if (St.playing.value) {
-            player.pause();
-            St.playing.value = false;
-        } else {
+        player.pause();
+        St.playing.value = false;
+        player.shuttle = 1;
+        setShuttle(1);
+    };
+    const playAt = async (rate: number) => {
+        if (!player) return;
+        player.shuttle = rate;
+        setShuttle(rate);
+        if (!St.playing.value) {
             St.playing.value = true;
             await player.play();
         }
     };
+    const togglePlay = async () => {
+        if (St.playing.value) pause();
+        else await playAt(1);
+    };
+
+    // Full-screen viewer (Resolve's Cinema Viewer): real fullscreen when the
+    // browser allows it, otherwise a fixed overlay. Esc leaves either.
+    const viewerRef = useRef<HTMLElement>(null);
+    const toggleCinema = async () => {
+        if (St.cinema.value) {
+            if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+            St.cinema.value = false;
+            return;
+        }
+        St.cinema.value = true;
+        await viewerRef.current?.requestFullscreen?.().catch(() => {});
+    };
+    useEffect(() => {
+        const onFs = () => {
+            if (!document.fullscreenElement) St.cinema.value = false;
+        };
+        document.addEventListener("fullscreenchange", onFs);
+        return () => {
+            document.removeEventListener("fullscreenchange", onFs);
+            St.cinema.value = false;
+        };
+    }, []);
+    // Hide the overlay controls while the pointer rests.
+    const [idle, setIdle] = useState(false);
+    const idleTimer = useRef<number | undefined>(undefined);
+    const wake = () => {
+        setIdle(false);
+        clearTimeout(idleTimer.current);
+        idleTimer.current = window.setTimeout(() => setIdle(true), 2200);
+    };
+    useEffect(() => {
+        if (St.cinema.value) wake();
+        else setIdle(false);
+    }, [St.cinema.value]);
 
     const seekTo = (src: number) => {
         St.playhead.value = Math.max(0, Math.min(src, St.project.value?.duration ?? 0));
@@ -153,11 +204,34 @@ export function Editor({ id }: { id: string }) {
                     break;
                 case "z":
                 case "Z":
-                    A.addZoom();
-                    tab.value = "zoom";
+                    if (e.shiftKey) {
+                        St.autoFit.value = true;
+                        St.fitRequest.value++;
+                    }
+                    else {
+                        A.addZoom();
+                        tab.value = "zoom";
+                    }
+                    break;
+                case "f":
+                case "F":
+                    void toggleCinema();
+                    break;
+                case "k":
+                case "K":
+                    pause();
                     break;
                 case "l":
                 case "L":
+                    if (!St.playing.value) void playAt(1);
+                    else void playAt(Math.min(4, (player?.shuttle ?? 1) * 2));
+                    break;
+                case "j":
+                case "J":
+                    seekTo(St.playhead.value - 5);
+                    break;
+                case "c":
+                case "C":
                     if (St.project.value.sources.some((s) => s.kind === "camera")) {
                         A.addLayout();
                         tab.value = "camera";
@@ -182,13 +256,14 @@ export function Editor({ id }: { id: string }) {
                     seekTo(St.project.value.duration);
                     break;
                 case "Escape":
-                    St.selection.value = null;
+                    if (St.cinema.value) void toggleCinema();
+                    else St.selection.value = null;
                     break;
             }
         };
         addEventListener("keydown", onKey);
         return () => removeEventListener("keydown", onKey);
-    }, [player, exporting]);
+    }, [player, exporting, shuttle]);
 
     // Selecting something opens the relevant inspector tab.
     const sel = St.selection.value;
@@ -278,6 +353,17 @@ export function Editor({ id }: { id: string }) {
                     </div>
                 </div>
                 <div class="row">
+                    <button
+                        class="btn icon"
+                        type="button"
+                        aria-label="Show inspector"
+                        aria-pressed={St.inspectorOpen.value}
+                        title="Inspector"
+                        onClick={St.toggleInspector}
+                    >
+                        <Icon name="sidebar" />
+                    </button>
+                    <span class="sep" aria-hidden="true" />
                     <button class="btn icon" type="button" aria-label="Undo" title="Undo (⌘Z)" disabled={!St.canUndo.value} onClick={St.undo}>
                         <Icon name="undo" />
                     </button>
@@ -298,9 +384,14 @@ export function Editor({ id }: { id: string }) {
                 </div>
             </header>
 
-            <div class="editor" style={{ "--tl-h": `${tlHeight}px` }}>
-                <section class="panel viewer" aria-label="Program monitor">
-                    <div class="viewer-stage">
+            <div class={`editor${St.inspectorOpen.value ? "" : " no-inspector"}`} style={{ "--tl-h": `${tlHeight}px` }}>
+                <section
+                    ref={viewerRef}
+                    class={`panel viewer${St.cinema.value ? " cinema" : ""}${St.cinema.value && idle ? " idle" : ""}`}
+                    aria-label="Viewer"
+                    onPointerMove={St.cinema.value ? wake : undefined}
+                >
+                    <div class="viewer-stage" onDblClick={() => void toggleCinema()}>
                         <canvas
                             ref={canvas}
                             width={cw}
@@ -312,10 +403,11 @@ export function Editor({ id }: { id: string }) {
                     </div>
                     <div class="transport">
                         <div class="row">
-                            <span class="timecode">
-                                {formatTime(outNow, true)}
-                                <span class="of"> / {formatTime(outDur, true)}</span>
+                            <span class="timecode" title="Timecode (HH:MM:SS:frames)">
+                                {formatTimecode(outNow)}
+                                <span class="of"> / {formatTimecode(outDur)}</span>
                             </span>
+                            {shuttle > 1 && <span class="small mono muted">{shuttle}×</span>}
                             {cutTotal > 0.05 && <span class="small muted">{cutTotal.toFixed(1)} s cut</span>}
                             {inCut && !St.playing.value && (
                                 <button
@@ -337,7 +429,7 @@ export function Editor({ id }: { id: string }) {
                             <button class="btn icon ghost" type="button" aria-label="Back one frame" title="Back one frame (←)" onClick={() => stepFrame(-1)}>
                                 <Icon name="stepBack" size={14} />
                             </button>
-                            <button class="btn icon play" type="button" aria-label={St.playing.value ? "Pause" : "Play"} title="Play/pause (Space)" onClick={() => void togglePlay()}>
+                            <button class="btn icon play" type="button" aria-label={St.playing.value ? "Pause" : "Play"} title="Play/pause (Space · J K L)" onClick={() => void togglePlay()}>
                                 <Icon name={St.playing.value ? "pause" : "play"} size={14} />
                             </button>
                             <button class="btn icon ghost" type="button" aria-label="Forward one frame" title="Forward one frame (→)" onClick={() => stepFrame(1)}>
@@ -347,16 +439,29 @@ export function Editor({ id }: { id: string }) {
                                 <Icon name="end" size={14} />
                             </button>
                         </div>
-                        <Segmented
-                            label="Aspect ratio"
-                            value={p.style.aspect}
-                            options={(["16:9", "9:16", "1:1", "4:5"] as const).map((a) => ({ value: a, label: a }))}
-                            onChange={(a) => St.setStyle(() => ({ aspect: a }))}
-                        />
+                        <div class="row" style={{ gap: "6px" }}>
+                            {!St.cinema.value && (
+                                <Segmented
+                                    label="Aspect ratio"
+                                    value={p.style.aspect}
+                                    options={(["16:9", "9:16", "1:1", "4:5"] as const).map((a) => ({ value: a, label: a }))}
+                                    onChange={(a) => St.setStyle(() => ({ aspect: a }))}
+                                />
+                            )}
+                            <button
+                                class="btn icon ghost"
+                                type="button"
+                                aria-label={St.cinema.value ? "Exit full screen" : "Full screen"}
+                                title={St.cinema.value ? "Exit full screen (F or Esc)" : "Full screen (F)"}
+                                onClick={() => void toggleCinema()}
+                            >
+                                <Icon name={St.cinema.value ? "shrink" : "expand"} />
+                            </button>
+                        </div>
                     </div>
                 </section>
 
-                <Inspector player={player} />
+                {St.inspectorOpen.value && <Inspector player={player} />}
 
                 <section class="panel timeline" aria-label="Timeline">
                     <div

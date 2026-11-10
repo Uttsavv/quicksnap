@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "preact/hooks";
-import { formatTime, moveBoundary, setClip, sourceToOutput, splitAt } from "../lib/timeline";
+import { formatTimecode, moveBoundary, setClip, sourceToOutput, splitAt } from "../lib/timeline";
 import type { Clip, Timeline as TL } from "../lib/types";
 import { Segmented } from "../ui/controls";
 import { Icon } from "../ui/icons";
 import * as A from "./actions";
 import { LEVEL_STEP } from "./analysis";
 import type { Player } from "./player";
-import { begin, end, liveTimeline, playhead, project, pxPerSecond, selection, setTimeline } from "./store";
+import { autoFit, begin, end, fitRequest, liveTimeline, playhead, project, pxPerSecond, selection, setTimeline } from "./store";
 
 const LABEL_W = 112; // sticky track-header column
 const PAD = 0;
@@ -233,11 +233,26 @@ export function Timeline({ player }: { player: Player }) {
     const hasCamera = p.sources.some((s) => s.kind === "camera");
     const hasAudio = p.sources.some((s) => s.kind === "audio");
 
-    // Fit the whole recording on first open.
-    useEffect(() => {
+    // Fit the whole recording to the panel, and keep fitting on resize until
+    // the user zooms by hand (⇧Z or the Fit button turns it back on).
+    const fit = () => {
         const w = scroller.current?.clientWidth ?? 1000;
-        pxPerSecond.value = Math.max(2, Math.min(300, (w - LABEL_W - PAD * 2 - 10) / Math.max(1, p.duration)));
+        pxPerSecond.value = Math.max(2, Math.min(300, (w - LABEL_W - 24) / Math.max(1, p.duration)));
+    };
+    useEffect(() => {
+        autoFit.value = true;
+        fit();
     }, [p.id]);
+    useEffect(() => {
+        if (fitRequest.value) fit();
+    }, [fitRequest.value]);
+    useEffect(() => {
+        const el = scroller.current;
+        if (!el) return;
+        const ro = new ResizeObserver(() => autoFit.value && fit());
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [p.duration]);
 
     // Keep the playhead in view while playing.
     useEffect(() => {
@@ -288,8 +303,8 @@ export function Timeline({ player }: { player: Player }) {
                         <Icon name="zoom" /> Zoom <kbd>Z</kbd>
                     </button>
                     {hasCamera && (
-                        <button class="btn" type="button" onClick={() => A.addLayout()} title="Add layout change (L)">
-                            <Icon name="camera" /> Layout <kbd>L</kbd>
+                        <button class="btn" type="button" onClick={() => A.addLayout()} title="Add layout change (C)">
+                            <Icon name="camera" /> Layout <kbd>C</kbd>
                         </button>
                     )}
                     <button class="btn" type="button" onClick={() => A.addMarker()} title="Add marker (M)">
@@ -329,16 +344,31 @@ export function Timeline({ player }: { player: Player }) {
                             value={Math.log(pps)}
                             style={{ width: "120px" }}
                             aria-label="Timeline zoom"
-                            onInput={(e) => (pxPerSecond.value = Math.exp(Number((e.target as HTMLInputElement).value)))}
+                            onInput={(e) => {
+                                autoFit.value = false;
+                                pxPerSecond.value = Math.exp(Number((e.target as HTMLInputElement).value));
+                            }}
                         />
                     </label>
+                    <button
+                        class="btn"
+                        type="button"
+                        aria-pressed={autoFit.value}
+                        title="Fit the whole recording (⇧Z)"
+                        onClick={() => {
+                            autoFit.value = true;
+                            fit();
+                        }}
+                    >
+                        <Icon name="fit" /> Fit
+                    </button>
                 </div>
             </div>
 
             <div class="tl-scroll" ref={scroller}>
                 <div class="tl-inner" style={{ width: `${width + LABEL_W + 40}px` }}>
                     <div class="tl-row tl-ruler-row">
-                        <div class="tl-head mono">{formatTime(sourceToOutput(p.timeline.clips, playhead.value), true)}</div>
+                        <div class="tl-head mono">{formatTimecode(sourceToOutput(p.timeline.clips, playhead.value))}</div>
                         <div class="tl-ruler" style={{ width: `${width}px` }} onPointerDown={scrub}>
                             <div class="tl-playhead" style={{ left: `${playhead.value * pps}px` }} />
                             {ticks.map((t) => (

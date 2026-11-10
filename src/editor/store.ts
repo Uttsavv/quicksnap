@@ -22,6 +22,34 @@ export const playing = signal(false);
 export const pxPerSecond = signal(40);
 export const saveState = signal<"saved" | "saving" | "error">("saved");
 
+const readPref = (k: string, d: boolean) => {
+    try {
+        const v = localStorage.getItem(k);
+        return v === null ? d : v === "1";
+    } catch {
+        return d;
+    }
+};
+const writePref = (k: string, v: boolean) => {
+    try {
+        localStorage.setItem(k, v ? "1" : "0");
+    } catch {
+        /* storage unavailable */
+    }
+};
+
+/** Panel and viewer state (Resolve-style workspace toggles). */
+export const inspectorOpen = signal(readPref("qs.inspector", true));
+export function toggleInspector() {
+    inspectorOpen.value = !inspectorOpen.value;
+    writePref("qs.inspector", inspectorOpen.value);
+}
+export const cinema = signal(false);
+/** True while the timeline follows the panel width; manual zoom turns it off. */
+export const autoFit = signal(true);
+/** Bumped to ask the timeline to fit the whole recording. */
+export const fitRequest = signal(0);
+
 const past = signal<Snapshot[]>([]);
 const future = signal<Snapshot[]>([]);
 export const canUndo = computed(() => past.value.length > 0);

@@ -130,3 +130,13 @@ export function formatClock(s: number): string {
     const h = Math.floor(s / 3600);
     return `${String(h).padStart(2, "0")}:${formatTime(s % 3600)}`;
 }
+
+/** Editing timecode, HH:MM:SS:FF. */
+export function formatTimecode(s: number, fps = 30): string {
+    if (!isFinite(s) || s < 0) s = 0;
+    const total = Math.round(s * fps);
+    const f = total % fps;
+    const sec = Math.floor(total / fps);
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(Math.floor(sec / 3600))}:${p(Math.floor((sec % 3600) / 60))}:${p(sec % 60)}:${p(f)}`;
+}
