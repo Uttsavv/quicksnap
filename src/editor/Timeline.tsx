@@ -3,14 +3,15 @@ import { moveSceneEdge } from "../lib/scenes";
 import { formatTime, formatTimecode, moveBoundary, setClip, sourceToOutput, splitAt } from "../lib/timeline";
 import type { Clip, Timeline as TL } from "../lib/types";
 import { Segmented } from "../ui/controls";
-import { Icon } from "../ui/icons";
+import { Icon, type IconName } from "../ui/icons";
 import { sceneName } from "../ui/scenes";
 import * as A from "./actions";
 import { LEVEL_STEP } from "./analysis";
+import { captionFocus, tab } from "./Inspector";
 import type { Player } from "./player";
-import { autoFit, begin, end, fitRequest, liveTimeline, playhead, project, pxPerSecond, selection, setTimeline } from "./store";
+import { autoFit, begin, end, fitRequest, inspectorOpen, liveTimeline, playhead, project, pxPerSecond, selection, setStyle, setTimeline, toggleInspector } from "./store";
 
-const LABEL_W = 112; // sticky track-header column
+const LABEL_W = 124; // sticky track-header column (room for the eye toggle)
 const PAD = 0;
 
 type SegKey = "zooms" | "captions";
@@ -164,11 +165,47 @@ function ClipLane() {
     );
 }
 
-function SegLane(props: { k: SegKey; kind: SegKind; cls: string; label: (s: TL[SegKey][number]) => string; onEmptyDouble?: (t: number) => void }) {
+/** Track header, with an optional Vegas-style toggle that takes the whole track out of preview and export. */
+function TrackHead(props: { icon: IconName; label: string; toggle?: { off: boolean; set: (off: boolean) => void; what: string; sound?: boolean } }) {
+    const t = props.toggle;
+    const verb = t?.sound ? (t.off ? "Unmute" : "Mute") : t?.off ? "Show" : "Hide";
+    return (
+        <div class={`tl-head${t?.off ? " off" : ""}`}>
+            <Icon name={props.icon} size={14} />
+            <span class="tl-head-label">{props.label}</span>
+            {t && (
+                <button
+                    type="button"
+                    class="tl-eye"
+                    aria-pressed={t.off}
+                    aria-label={`${verb} ${t.what}`}
+                    title={`${verb} ${t.what} in the preview and export`}
+                    onClick={() => t.set(!t.off)}
+                >
+                    <Icon name={t.sound ? (t.off ? "mute" : "speaker") : t.off ? "eyeOff" : "eye"} size={14} />
+                </button>
+            )}
+        </div>
+    );
+}
+
+type Seg = { id: string; start: number; end: number; suggested?: boolean };
+
+function SegLane(props: {
+    k: SegKey;
+    kind: SegKind;
+    cls: string;
+    label: (s: TL[SegKey][number]) => string;
+    onEmptyDouble?: (t: number) => void;
+    /** A click (not a drag) on an item. */
+    onPick?: (it: Seg) => void;
+    onItemDouble?: (it: Seg) => void;
+    off?: boolean;
+}) {
     const p = project.value!;
     const pps = pxPerSecond.value;
     const drag = useDrag();
-    const items = p.timeline[props.k] as { id: string; start: number; end: number; suggested?: boolean }[];
+    const items = p.timeline[props.k] as Seg[];
     const sel = selection.value;
 
     const change = (id: string, s: number, e: number) =>
@@ -190,13 +227,16 @@ function SegLane(props: { k: SegKey; kind: SegKind; cls: string; label: (s: TL[S
                 } else if (mode === "l") change(item.id, Math.min(snap(Math.max(0, item.start + dt)), item.end - 0.3), item.end);
                 else change(item.id, item.start, Math.max(snap(Math.min(dur, item.end + dt)), item.start + 0.3));
             },
-            () => end(),
+            (moved) => {
+                end();
+                if (!moved && mode === "move") props.onPick?.(item);
+            },
         );
     };
 
     return (
         <div
-            class="tl-lane"
+            class={`tl-lane${props.off ? " off" : ""}`}
             style={{ width: `${p.duration * pps}px` }}
             onDblClick={(e) => {
                 if (e.target !== e.currentTarget || !props.onEmptyDouble) return;
@@ -215,6 +255,8 @@ function SegLane(props: { k: SegKey; kind: SegKind; cls: string; label: (s: TL[S
                         style={{ left: `${it.start * pps}px`, width: `${Math.max(6, (it.end - it.start) * pps)}px` }}
                         onPointerDown={(e) => startDrag(e, it, "move")}
                         onClick={(e) => e.stopPropagation()}
+                        onDblClick={props.onItemDouble && (() => props.onItemDouble!(it))}
+                        title={props.kind === "caption" ? `${props.label(it as never)}\nDouble-click to edit` : undefined}
                         aria-label={props.label(it as never)}
                     >
                         <span class="tl-handle l" onPointerDown={(e) => startDrag(e, it, "l")} />
@@ -333,6 +375,18 @@ export function Timeline({ player }: { player: Player }) {
         lane.addEventListener("pointerup", up);
     };
 
+    // Picking a caption takes you to it: playhead on it, its row in view, ready to edit.
+    const openCaption = (c: Seg, edit: boolean) => {
+        const at = playhead.value;
+        if (!(at >= c.start && at < c.end)) {
+            playhead.value = c.start;
+            void player.seek(c.start);
+        }
+        if (!inspectorOpen.value) toggleInspector();
+        tab.value = "captions";
+        captionFocus.value = { id: c.id, edit };
+    };
+
     const step = tickStep(pps);
     const ticks: number[] = [];
     for (let t = 0; t <= p.duration; t += step) ticks.push(t);
@@ -441,12 +495,12 @@ export function Timeline({ player }: { player: Player }) {
                     </div>
 
                     <div class="tl-row">
-                        <div class="tl-head"><Icon name="clip" size={14} />Clips</div>
+                        <TrackHead icon="clip" label="Clips" />
                         <ClipLane />
                     </div>
                     <div class="tl-row">
-                        <div class="tl-head"><Icon name="zoom" size={14} />Zoom</div>
-                        <SegLane k="zooms" kind="zoom" cls="zoom" label={(z) => `${(z as { scale: number }).scale}×${(z as { suggested?: boolean }).suggested ? " suggested" : ""}`} onEmptyDouble={(t) => A.addZoom(t)} />
+                        <TrackHead icon="zoom" label="Zoom" toggle={{ off: !!p.style.hideZooms, set: (off) => setStyle(() => ({ hideZooms: off })), what: "zooms" }} />
+                        <SegLane k="zooms" kind="zoom" cls="zoom" off={p.style.hideZooms} label={(z) => `${(z as { scale: number }).scale}×${(z as { suggested?: boolean }).suggested ? " suggested" : ""}`} onEmptyDouble={(t) => A.addZoom(t)} />
                     </div>
                     {hasCamera && (
                         <div class="tl-row">
@@ -456,14 +510,22 @@ export function Timeline({ player }: { player: Player }) {
                     )}
                     {p.timeline.captions.length > 0 && (
                         <div class="tl-row">
-                            <div class="tl-head"><Icon name="captions" size={14} />Captions</div>
-                            <SegLane k="captions" kind="caption" cls="caption" label={(c) => (c as { text: string }).text} />
+                            <TrackHead icon="captions" label="Captions" toggle={{ off: !p.style.showCaptions, set: (off) => setStyle(() => ({ showCaptions: !off })), what: "captions" }} />
+                            <SegLane
+                                k="captions"
+                                kind="caption"
+                                cls="caption"
+                                off={!p.style.showCaptions}
+                                label={(c) => (c as { text: string }).text}
+                                onPick={(c) => openCaption(c, false)}
+                                onItemDouble={(c) => openCaption(c, true)}
+                            />
                         </div>
                     )}
                     {hasAudio && (
                         <div class="tl-row">
-                            <div class="tl-head"><Icon name="wave" size={14} />Audio</div>
-                            <div class="tl-lane tall" style={{ width: `${width}px` }} onPointerDown={scrub}>
+                            <TrackHead icon="wave" label="Audio" toggle={{ off: !!p.style.muteAudio, set: (off) => setStyle(() => ({ muteAudio: off })), what: "audio", sound: true }} />
+                            <div class={`tl-lane tall${p.style.muteAudio ? " off" : ""}`} style={{ width: `${width}px` }} onPointerDown={scrub}>
                                 <Waveform width={width} />
                             </div>
                         </div>

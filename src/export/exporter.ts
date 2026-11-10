@@ -142,7 +142,7 @@ async function drawFrames(
                     backgroundImage: f.bg,
                     backgroundImageSize: f.bg ? [f.bg.width, f.bg.height] : undefined,
                 },
-                stateAt(src, { ...p.timeline, style: p.style }),
+                stateAt(src, { ...p.timeline, zooms: p.style.hideZooms ? [] : p.timeline.zooms, style: p.style }),
             );
             await onFrame(i, i / fps);
             const done = (i + 1) / f.count;
@@ -180,7 +180,7 @@ async function* editedAudio(p: Project, track: InputAudioTrack): AsyncGenerator<
     for (const clip of p.timeline.clips) {
         if (!clip.enabled) continue;
         const len = (clip.end - clip.start) / clip.speed;
-        if (clip.speed !== 1 || clip.volume === 0) {
+        if (clip.speed !== 1 || clip.volume === 0 || p.style.muteAudio) {
             yield* silence(len);
             continue;
         }

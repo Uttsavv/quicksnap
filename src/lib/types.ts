@@ -99,6 +99,9 @@ export interface Style {
     defaultLayout: LayoutMode;
     camera: CameraStyle;
     showCaptions: boolean;
+    /** Track toggles (the eye/speaker on a track header): off in preview and export. */
+    hideZooms?: boolean;
+    muteAudio?: boolean;
 }
 
 export interface Project {

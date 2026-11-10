@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals";
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { formatTime, setClip } from "../lib/timeline";
 import { recordedScenes, sameScenes, sceneIndexAt, startScene } from "../lib/scenes";
 import { resetLook, saveLook, uid, type Corner, type Easing } from "../lib/types";
@@ -10,7 +10,7 @@ import { Icon, type IconName } from "../ui/icons";
 import { SCENES, SceneArt, sceneName } from "../ui/scenes";
 import * as A from "./actions";
 import type { Player } from "./player";
-import { begin, end, liveStyle, liveTimeline, playhead, project, selection, setStyle, setTimeline } from "./store";
+import { begin, end, liveStyle, liveTimeline, playhead, playing, project, selection, setStyle, setTimeline } from "./store";
 
 export type Tab = "style" | "zoom" | "audio" | "captions";
 export const tab = signal<Tab>("style");
@@ -432,10 +432,65 @@ const LANGS = [
     ["japanese", "Japanese"],
 ] as const;
 
+/** Ask the captions list to bring a caption into view, and optionally start editing it. */
+export const captionFocus = signal<{ id: string; edit: boolean } | null>(null);
+
 function CaptionsTab({ player }: { player: Player }) {
     const p = project.value!;
     const [lang, setLang] = useState("");
+    const list = useRef<HTMLDivElement>(null);
     const caps = p.timeline.captions;
+    const t = playhead.value;
+    const sel = selection.value;
+    const nowId = caps.find((c) => t >= c.start && t < c.end)?.id;
+
+    const row = (id: string) => list.current?.querySelector<HTMLElement>(`[data-cap="${id}"]`);
+
+    // A caption picked on the timeline: scroll to it and, for an edit, put the caret at the end.
+    const focus = captionFocus.value;
+    useEffect(() => {
+        if (!focus) return;
+        captionFocus.value = null; // handled; don't replay it when the tab is reopened
+        const el = row(focus.id);
+        if (!el) return;
+        el.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        if (focus.edit) {
+            const ta = el.querySelector("textarea")!;
+            ta.focus({ preventScroll: true });
+            ta.setSelectionRange(ta.value.length, ta.value.length);
+        }
+    }, [focus]);
+
+    // While playing, keep the spoken caption in view (unless you're typing in the list).
+    useEffect(() => {
+        if (!playing.value || !nowId || list.current?.contains(document.activeElement)) return;
+        row(nowId)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }, [nowId]);
+
+    // Enter edits the selected caption, like double-clicking it.
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            const s = selection.value;
+            const target = e.target as HTMLElement;
+            if (e.key !== "Enter" || s?.kind !== "caption" || target.closest("input, textarea, select, button, [contenteditable]")) return;
+            e.preventDefault();
+            captionFocus.value = { id: s.id, edit: true };
+        };
+        addEventListener("keydown", onKey);
+        return () => removeEventListener("keydown", onKey);
+    }, []);
+
+    const goTo = (id: string, seek: boolean) => {
+        const c = project.value!.timeline.captions.find((x) => x.id === id);
+        if (!c) return;
+        selection.value = { kind: "caption", id };
+        const at = playhead.value;
+        if (seek && !(at >= c.start && at < c.end)) {
+            playhead.value = c.start;
+            void player.seek(c.start);
+        }
+    };
+
     if (!p.sources.some((s) => s.kind === "audio")) return <p class="small muted">This recording has no audio.</p>;
     return (
         <>
@@ -465,33 +520,47 @@ function CaptionsTab({ player }: { player: Player }) {
             )}
             <Check label="Show captions in the video" checked={p.style.showCaptions} onChange={(v) => setStyle(() => ({ showCaptions: v }))} />
             {caps.length > 0 && (
-                <div class="group" style={{ gap: "6px" }}>
-                    {caps.map((c) => (
-                        <div class="row" style={{ alignItems: "flex-start" }}>
-                            <button
-                                type="button"
-                                class="btn ghost mono"
-                                style={{ height: "32px", padding: "0 6px", fontSize: "11px" }}
-                                onClick={() => {
-                                    playhead.value = c.start;
-                                    void player.seek(c.start);
-                                    selection.value = { kind: "caption", id: c.id };
-                                }}
-                            >
-                                {formatTime(c.start)}
-                            </button>
-                            <input
-                                type="text"
-                                aria-label={`Caption at ${formatTime(c.start)}`}
-                                value={c.text}
-                                onChange={(e) => {
-                                    const text = (e.target as HTMLInputElement).value;
-                                    setTimeline((tl) => ({ captions: tl.captions.map((x) => (x.id === c.id ? { ...x, text } : x)) }));
-                                }}
-                            />
-                        </div>
-                    ))}
-                </div>
+                <>
+                    <p class="small muted" style={{ margin: 0 }}>
+                        Enter goes to the next caption. Esc stops editing.
+                    </p>
+                    <div class="cap-list" ref={list}>
+                        {caps.map((c, i) => (
+                            <div key={c.id} data-cap={c.id} class={`cap-row${sel?.kind === "caption" && sel.id === c.id ? " selected" : ""}${c.id === nowId ? " now" : ""}`}>
+                                <button type="button" class="cap-time mono" title="Jump to this caption" onClick={() => goTo(c.id, true)}>
+                                    {formatTime(c.start)}
+                                </button>
+                                <textarea
+                                    rows={1}
+                                    spellcheck
+                                    aria-label={`Caption at ${formatTime(c.start)}`}
+                                    value={c.text}
+                                    onFocus={() => {
+                                        goTo(c.id, true);
+                                        begin(); // the whole edit of this caption is one undo step
+                                    }}
+                                    onBlur={end}
+                                    onInput={(e) => {
+                                        const text = (e.target as HTMLTextAreaElement).value.replace(/\n/g, " ");
+                                        liveTimeline((tl) => ({ captions: tl.captions.map((x) => (x.id === c.id ? { ...x, text } : x)) }));
+                                    }}
+                                    onKeyDown={(e) => {
+                                        const ta = e.currentTarget as HTMLTextAreaElement;
+                                        if (e.key === "Escape") {
+                                            e.preventDefault();
+                                            ta.blur();
+                                        } else if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+                                            e.preventDefault();
+                                            const next = caps[i + 1];
+                                            if (next) captionFocus.value = { id: next.id, edit: true };
+                                            else ta.blur();
+                                        }
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </>
             )}
         </>
     );

@@ -140,7 +140,7 @@ export class Player {
         for (const e of this.elements) e.playbackRate = rate;
         if (this.audio) {
             // Sped-up or slowed clips play silent; the export does the same.
-            const vol = clip && clip.enabled && (clip.speed ?? 1) === 1 ? clip.volume : 0;
+            const vol = clip && clip.enabled && (clip.speed ?? 1) === 1 && !p.style.muteAudio ? clip.volume : 0;
             if (this.gain) this.gain.gain.value = vol;
             else this.audio.volume = Math.min(1, vol);
         }
@@ -245,6 +245,7 @@ export class Player {
 
 /** Zooms as the preview shows them: the selected suggestion plays so it can be judged before keeping it. */
 export function previewZooms(p: Project) {
+    if (p.style.hideZooms) return [];
     const sel = selection.value;
     if (sel?.kind !== "zoom") return p.timeline.zooms;
     return p.timeline.zooms.map((z) => (z.suggested && z.id === sel.id ? { ...z, suggested: false } : z));

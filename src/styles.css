@@ -219,11 +219,23 @@ input[type="color"] { width: 36px; height: 24px; border: 1px solid var(--line-2)
 .tl-inner { position: relative; display: flex; flex-direction: column; user-select: none; padding-bottom: 8px; }
 .tl-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
 .tl-head {
-    position: sticky; left: 0; z-index: 4; width: 112px; flex: none; background: var(--panel);
+    position: sticky; left: 0; z-index: 4; width: 124px; flex: none; background: var(--panel);
     border-right: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 10px;
     font-size: 11.5px; color: var(--text-2);
 }
 .tl-head svg { color: var(--muted); flex: none; }
+.tl-head-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Vegas-style track toggle: quiet until hovered or switched off. */
+.tl-eye {
+    flex: none; display: grid; place-items: center; width: 22px; height: 22px; margin-right: -4px; border: 0; border-radius: 5px;
+    background: transparent; color: var(--muted); cursor: pointer; opacity: .55; transition: opacity .12s, background .12s, color .12s;
+}
+.tl-eye svg { color: inherit; }
+.tl-row:hover .tl-eye, .tl-eye:focus-visible { opacity: 1; }
+.tl-eye:hover { background: var(--raised); color: var(--text); }
+.tl-eye[aria-pressed="true"] { opacity: 1; color: var(--warn); }
+.tl-head.off { color: var(--muted); }
+.tl-lane.off { opacity: .35; }
 .tl-ruler-row { position: sticky; top: 0; z-index: 5; background: var(--panel); }
 .tl-ruler { position: relative; flex: none; height: 26px; cursor: ew-resize; }
 .tl-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line-2); padding: 5px 0 0 4px; font: 10.5px var(--mono); color: var(--muted); }
@@ -244,6 +256,21 @@ input[type="color"] { width: 36px; height: 24px; border: 1px solid var(--line-2)
 /* Screen only hides the camera, so it reads as an empty outline. */
 .tl-item.layout.scene-screen { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line-2); }
 .tl-item.selected { box-shadow: inset 0 0 0 2px var(--text); z-index: 2; }
+
+/* Captions list: every line fully visible; the picked one and the spoken one stand out. */
+.cap-list { display: flex; flex-direction: column; gap: 4px; }
+.cap-row { display: flex; align-items: flex-start; gap: 6px; padding: 3px; border-radius: 8px; scroll-margin: 12px; transition: background .15s; }
+.cap-row.now .cap-time { color: var(--accent-text); }
+.cap-row.selected { background: var(--accent-soft); }
+.cap-time { flex: none; height: 30px; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.cap-time:hover { background: var(--raised); color: var(--text); }
+.cap-row textarea {
+    flex: 1; min-width: 0; min-height: 30px; resize: none; field-sizing: content; overflow: hidden;
+    padding: 6px 8px; font: inherit; font-size: 12.5px; line-height: 1.4; color: var(--text);
+    background: var(--raised); border: 1px solid var(--line-2); border-radius: var(--r);
+}
+.cap-row textarea:hover { border-color: var(--muted); }
+.cap-row textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .tl-item.layout.scene-screen.selected { box-shadow: inset 0 0 0 2px var(--text); }
 .tl-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; z-index: 3; }
 .tl-handle.l { left: 0; }
