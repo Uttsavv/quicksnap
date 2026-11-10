@@ -79,7 +79,7 @@ h1, h2, h3, p { margin: 0; }
 .hero {
     min-height: calc(100svh - 72px);
     display: grid; grid-template-columns: minmax(380px, 460px) minmax(0, 1fr); align-items: center; gap: 72px;
-    padding: 24px var(--gutter) 40px;
+    padding: 24px var(--gutter) 72px;
 }
 .hero-copy { display: flex; flex-direction: column; align-items: flex-start; }
 .news {
@@ -411,7 +411,7 @@ kbd { font: 500 10.5px var(--mono); color: var(--muted); border: 1px solid var(-
 
 /* ══ Sections ════════════════════════════════════════════════ */
 .features, .faq { padding: 120px var(--gutter) 72px; }
-.features { padding-top: 56px; padding-bottom: 24px; scroll-margin-top: 40px; }
+.features { padding-top: 72px; padding-bottom: 24px; scroll-margin-top: 24px; }
 .faq { padding-top: 72px; }
 .sec-head { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 48px; }
 h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.04em; font-weight: 500; max-width: 15em; text-wrap: balance; }
