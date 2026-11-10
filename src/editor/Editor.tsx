@@ -10,7 +10,7 @@ import { LogoMark } from "../ui/Logo";
 import { Loader } from "../ui/motion";
 import * as A from "./actions";
 import { Inspector, tab } from "./Inspector";
-import { Player } from "./player";
+import { Player, previewZooms } from "./player";
 import * as St from "./store";
 import { Timeline } from "./Timeline";
 
@@ -110,7 +110,7 @@ export function Editor({ id }: { id: string }) {
     // Redraw whenever the edit changes while paused.
     useEffect(() => {
         if (player && !St.playing.value) player.draw();
-    }, [p, player]);
+    }, [p, player, St.selection.value]);
 
     // Attach the canvas (size follows the aspect ratio).
     const [cw, ch] = p ? outputSize(p.style.aspect, St.cinema.value ? 1080 : PREVIEW_SHORT) : [1280, 720];
@@ -310,7 +310,7 @@ export function Editor({ id }: { id: string }) {
         const py = ((e.clientY - r.top) / r.height) * c.height;
         const t = St.playhead.value;
         // Measure in the unzoomed frame when the playhead is outside the zoom.
-        const zoom = t >= selZoom.start && t <= selZoom.end ? zoomAt(p.timeline.zooms, t) : { scale: 1, focus: [0.5, 0.5] as [number, number] };
+        const zoom = t >= selZoom.start && t <= selZoom.end ? zoomAt(previewZooms(p), t) : { scale: 1, focus: [0.5, 0.5] as [number, number] };
         const pt = canvasToScreen(
             px,
             py,

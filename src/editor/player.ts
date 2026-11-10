@@ -7,6 +7,7 @@ import type { Project, SourceFile } from "../lib/types";
 import { CameraBlur } from "../render/cameraBlur";
 import { renderFrame, stateAt } from "../render/compositor";
 import { readFile } from "../storage/files";
+import { playing as playingSignal, selection } from "./store";
 
 export class Player {
     screen: HTMLVideoElement | null = null;
@@ -117,6 +118,7 @@ export class Player {
             await this.seekAll(resume);
         }
         this.playing = true;
+        playingSignal.value = true; // keep the transport in sync when playback starts from elsewhere (e.g. zoom Preview)
         this.applyClip();
         await Promise.all(this.elements.map((e) => e.play().catch(() => {})));
         this.loop();
@@ -124,6 +126,7 @@ export class Player {
 
     pause() {
         this.playing = false;
+        playingSignal.value = false;
         cancelAnimationFrame(this.raf);
         for (const e of this.elements) e.pause();
         this.draw();
@@ -223,7 +226,7 @@ export class Player {
                 backgroundImage: this.bgImage,
                 backgroundImageSize: this.bgImage ? [this.bgImage.width, this.bgImage.height] : undefined,
             },
-            stateAt(this.src, { ...p.timeline, style: p.style }),
+            stateAt(this.src, { ...p.timeline, zooms: previewZooms(p), style: p.style }),
         );
     }
 
@@ -238,4 +241,11 @@ export class Player {
         void this.audioCtx?.close();
         this.bgImage?.close();
     }
+}
+
+/** Zooms as the preview shows them: the selected suggestion plays so it can be judged before keeping it. */
+export function previewZooms(p: Project) {
+    const sel = selection.value;
+    if (sel?.kind !== "zoom") return p.timeline.zooms;
+    return p.timeline.zooms.map((z) => (z.suggested && z.id === sel.id ? { ...z, suggested: false } : z));
 }
