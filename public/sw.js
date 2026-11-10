@@ -1,7 +1,7 @@
 // Offline support: the app shell is cached so Quicksnap opens without a
 // network. Recordings live in browser storage and never touch this cache.
-const CACHE = "quicksnap-v1";
-const SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/favicon.ico"];
+const CACHE = "quicksnap-v2";
+const SHELL = ["/", "/app/", "/manifest.webmanifest", "/icon.svg", "/favicon.ico"];
 
 self.addEventListener("install", (e) => {
     e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -45,10 +45,10 @@ self.addEventListener("fetch", (e) => {
             fetch(req)
                 .then((res) => {
                     const copy = res.clone();
-                    caches.open(CACHE).then((c) => c.put("/", copy));
+                    caches.open(CACHE).then((c) => c.put(url.pathname, copy));
                     return res;
                 })
-                .catch(() => caches.match("/")),
+                .catch(() => caches.match(url.pathname).then((hit) => hit || caches.match("/app/"))),
         );
     }
 });

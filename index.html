@@ -3,15 +3,271 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0d0e11" />
-    <meta name="description" content="Record your screen and camera in the browser, then polish it with zooms, backgrounds and captions. Nothing leaves your device." />
-    <title>Quicksnap</title>
+    <meta name="theme-color" content="#121212" />
+    <script>
+      // Old links (/#/library, /#/editor/…) and the installed app open the studio.
+      if (/^#\//.test(location.hash)) location.replace("/app/" + location.hash);
+      else if (matchMedia("(display-mode: standalone)").matches) location.replace("/app/");
+    </script>
+
+    <title>Quicksnap — Free Online Screen Recorder with Zooms and Captions</title>
+    <meta name="description" content="Record your screen, webcam and mic in the browser. Add zooms, captions and backgrounds, then export MP4 or GIF. Free, no sign-up, no watermark, and nothing is uploaded." />
+    <link rel="canonical" href="https://quicksnap.pages.dev/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Quicksnap" />
+    <meta property="og:url" content="https://quicksnap.pages.dev/" />
+    <meta property="og:title" content="Quicksnap — Screen recordings that look edited" />
+    <meta property="og:description" content="Record, zoom, caption and export in one browser tab. Free, and nothing ever leaves your device." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Quicksnap — Screen recordings that look edited" />
+    <meta name="twitter:description" content="Record, zoom, caption and export in one browser tab. Free, and nothing ever leaves your device." />
+
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "Quicksnap",
+            "url": "https://quicksnap.pages.dev/",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "Windows, macOS, Linux, ChromeOS",
+            "browserRequirements": "Requires a modern browser: Chrome, Edge, Firefox or Safari.",
+            "description": "A free, private screen recorder that runs in your browser. Record your screen, webcam and microphone, edit with zooms, captions and backgrounds, and export MP4, WebM or GIF. Nothing is uploaded.",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "featureList": [
+              "Screen recording with webcam overlay",
+              "Microphone and tab audio with noise suppression",
+              "On-device automatic captions (speech to text)",
+              "Smart zoom suggestions and zoom effects",
+              "Scene layouts: screen only, camera bubble, side by side, camera only",
+              "Webcam background blur",
+              "Instant replay buffer",
+              "Trim, cut and speed editing",
+              "Export MP4, WebM and GIF up to 4K",
+              "No sign-up, no watermark, no upload",
+              "Works offline"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "Is Quicksnap free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. No account, no trial, no watermark on exports." } },
+              { "@type": "Question", "name": "Are my recordings uploaded anywhere?", "acceptedAnswer": { "@type": "Answer", "text": "No. Recording, editing, captions and export all run in your browser, and files stay in your browser's storage." } },
+              { "@type": "Question", "name": "Which browsers does it work in?", "acceptedAnswer": { "@type": "Answer", "text": "Chrome and Edge get every feature. Firefox and Safari can record, edit and export, without floating controls or instant replay." } },
+              { "@type": "Question", "name": "Can I record system audio?", "acceptedAnswer": { "@type": "Answer", "text": "Yes on Windows and ChromeOS. On macOS the browser can only capture a tab's audio, so share a tab to include its sound." } }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.tsx"></script>
+  <body class="landing">
+    <header class="l-head">
+      <a class="logo" href="/" aria-label="Quicksnap home">
+        <svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M5 0h6v1h-6zM5 1h7v1h-7zM3 2h2v1h-2zM10 2h2v1h-2zM3 3h1v1h-1zM11 3h1v1h-1zM2 4h2v1h-2zM2 5h2v1h-2zM12 5h2v1h-2zM2 6h2v1h-2zM12 6h2v1h-2zM2 7h2v1h-2zM12 7h2v1h-2zM2 8h2v1h-2zM8 8h2v1h-2zM12 8h2v1h-2zM2 9h2v1h-2zM8 9h2v1h-2zM12 9h2v1h-2zM2 10h2v1h-2zM9 10h5v1h-5zM3 11h2v1h-2zM10 11h4v1h-4zM3 12h3v1h-3zM10 12h4v1h-4zM5 13h9v1h-9zM6 14h5v1h-5zM13 14h3v1h-3zM14 15h2v1h-2z" /><path fill="#ff1900" d="M12 0h4v1h-4zM12 1h4v1h-4zM12 2h4v1h-4zM12 3h4v1h-4zM12 4h4v1h-4z" /></svg>
+        Quicksnap
+      </a>
+      <nav class="l-nav" aria-label="Main">
+        <a href="#features">Features</a>
+        <a href="#faq">FAQ</a>
+        <a class="l-btn" href="/app/">Open studio</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy" data-enter>
+          <a class="news" href="#features"><span class="news-tag">New</span>Smart zoom suggestions<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg></a>
+          <h1 id="hero-title">Screen recordings that look <span class="sel"><span>edited.</span></span></h1>
+          <p class="lede">Record, zoom, caption and export in one browser tab. Nothing ever leaves your device.</p>
+          <div class="cta">
+            <a class="l-btn l-btn-rec" href="/app/"><span class="dot" aria-hidden="true"></span>Start recording</a>
+            <span class="cta-note">No install, no account.</span>
+          </div>
+          <dl class="stats">
+            <div><dt>uploaded, ever</dt><dd>0 bytes</dd></div>
+            <div><dt>export, no watermark</dt><dd>4K</dd></div>
+            <div><dt>no sign-up</dt><dd>$0</dd></div>
+          </dl>
+        </div>
+
+        <!-- Faux demo: a short reel of cuts, each one piece of Quicksnap shown big.
+             The markup is the poster frame (the finished edit); landing.ts plays the reel. -->
+        <div class="demo" id="demo" data-cut="take" data-suggest data-accept data-caps data-zoom data-captions data-done data-enter>
+          <div class="bokeh" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="cuts" aria-hidden="true">
+            <!-- 1. Record -->
+            <section class="cut c-rec">
+              <p class="c-label"><span class="rec-dot"></span>Studio · Screen + bubble</p>
+              <p class="big-clock">00:00:00</p>
+              <div class="c-rec-row">
+                <span class="big-rec" data-target="record"><i></i><span class="rec-label">Record</span></span>
+                <span class="big-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              </div>
+              <div class="c-cam"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
+            </section>
+
+            <!-- 2 and 4. The take, then the edited result -->
+            <section class="cut c-take">
+              <div class="canvas">
+                <div class="layer">
+                  <i class="bg"></i>
+                  <div class="frame">
+                    <div class="shot">
+                      <div class="b-chrome"><i></i><i></i><i></i><span class="b-url">acme.app/reports</span></div>
+                      <div class="b-page">
+                        <div class="b-head">
+                          <div><small>Reports</small><b>Weekly overview</b></div>
+                          <span class="b-share">Share report</span>
+                        </div>
+                        <div class="b-stats">
+                          <div><small>Visitors</small><b>48.2k</b><em>+12%</em></div>
+                          <div><small>Sign-ups</small><b>3,914</b><em>+8%</em></div>
+                          <div><small>Churn</small><b>1.9%</b><em>−0.4%</em></div>
+                        </div>
+                        <div class="b-chart">
+                          <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <path class="grid" d="M0 15H200M0 30H200M0 45H200" />
+                            <path class="area" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7 V60 H0Z" />
+                            <path class="line" pathLength="1" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="pop">
+                        <b>Share “Weekly overview”</b>
+                        <div class="pop-link"><span>acme.app/r/weekly</span><em>Copy link</em></div>
+                        <div class="pop-people"><i></i><i></i><i></i><span>Design team · 8 people</span></div>
+                      </div>
+                      <span class="ripple"></span>
+                      <svg class="p-ptr" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9.5 19z" /></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="bubble"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
+                <span class="rec-tag"><i></i>REC</span>
+                <p class="caption"><span style="--w: 0">Hit</span> <span style="--w: 1">Share</span> <span style="--w: 2">and</span> <span style="--w: 3">the</span> <span style="--w: 4">team</span> <span style="--w: 5">gets</span> <span style="--w: 6">it</span></p>
+              </div>
+            </section>
+
+            <!-- 3. The timeline: a suggested zoom, then captions -->
+            <section class="cut c-tl">
+              <div class="tl-bar">
+                <span class="chip-found"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>1 zoom suggested</span>
+                <span class="big-btn" data-target="captions"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
+              </div>
+              <div class="big-tl">
+                <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18v12H3z M8 6v12 M16 6v12" /></svg>Video</span>
+                <div class="lane"><span class="item clip">Recording<svg class="wave" viewBox="0 0 120 20" preserveAspectRatio="none"></svg></span></div>
+                <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>Zoom</span>
+                <div class="lane"><span class="item zoom" data-target="zoom"><span class="z-sug">Suggested</span><span class="z-on">Zoom 2×</span></span></div>
+                <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
+                <div class="lane"><span class="item cap" style="--i: 0; left: 20%; width: 10%">Hit Share</span><span class="item cap" style="--i: 1; left: 31%; width: 13%">and the team</span><span class="item cap" style="--i: 2; left: 45%; width: 9%">gets it</span></div>
+                <i class="playhead"></i>
+              </div>
+            </section>
+
+            <!-- 5. Export -->
+            <section class="cut c-export">
+              <div class="ex-card">
+                <p class="ex-title">Export</p>
+                <div class="ex-seg"><span class="on">MP4</span><span>WebM</span><span>GIF</span></div>
+                <div class="ex-row"><span>Resolution</span><b>1080p</b></div>
+                <div class="ex-row"><span>Estimated size</span><b>18 MB</b></div>
+                <span class="ex-btn" data-target="export"><span class="ex-fill"></span><span class="lbl lbl-export">Export video</span><span class="lbl lbl-saved"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>product-walkthrough.mp4 saved</span></span>
+              </div>
+            </section>
+
+            <div class="cursor"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9.5 19z" /></svg></div>
+          </div>
+
+          <div class="reel">
+            <button class="reel-pause" type="button" aria-label="Pause the demo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M7 5h3v14H7z M14 5h3v14h-3z" /><path class="i-play" d="M8 5v14l11-7z" /></svg></button>
+            <span class="reel-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="reel-label" aria-hidden="true">Zoom and captions</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="features" id="features" aria-labelledby="features-title">
+        <div class="sec-head">
+          <p class="marker"><span>00:12</span>What's inside</p>
+          <h2 id="features-title">Everything between hitting record and hitting send.</h2>
+        </div>
+        <ul class="cards">
+          <li class="card" data-i="0">
+            <div class="viz v-layout" aria-hidden="true"><div class="mc"><i class="m-scr"></i><i class="m-cam"></i></div></div>
+            <h3>Screen and webcam recording</h3>
+            <p>Your camera as a bubble, side by side or full frame.</p>
+          </li>
+          <li class="card" data-i="1">
+            <div class="viz v-cap" aria-hidden="true">
+              <span class="mini-chip"><svg viewBox="0 0 24 24"><path d="M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4" /></svg>On device</span>
+              <p><span>So</span> <span>this</span> <span>is</span> <span>the</span> <span>new</span> <span>flow</span></p>
+            </div>
+            <h3>Automatic captions</h3>
+            <p>Speech to text runs locally. Nothing goes to a server.</p>
+          </li>
+          <li class="card" data-i="2">
+            <div class="viz v-zoom" aria-hidden="true">
+              <div class="mz"><div class="mz-in"><i></i><i></i><i class="hot"></i></div></div>
+              <div class="mz-lane"><span></span></div>
+            </div>
+            <h3>Smart zoom</h3>
+            <p>Quicksnap spots where you clicked and suggests the zoom.</p>
+          </li>
+          <li class="card" data-i="3">
+            <div class="viz v-replay" aria-hidden="true">
+              <div class="rp-strip"><div class="rp-bars"></div><span class="rp-win">Last 2:00</span></div>
+              <span class="mini-btn">Save replay</span>
+            </div>
+            <h3>Instant replay</h3>
+            <p>Missed the moment? Save the last minutes after it happened.</p>
+          </li>
+          <li class="card" data-i="4">
+            <div class="viz v-blur" aria-hidden="true">
+              <div class="cam"><i class="room"></i><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
+              <span class="mini-row">Blur background<i class="tgl"></i></span>
+            </div>
+            <h3>Background blur</h3>
+            <p>Hide the laundry pile. No green screen needed.</p>
+          </li>
+          <li class="card" data-i="5">
+            <div class="viz v-export" aria-hidden="true">
+              <span class="mseg"><i></i><span>MP4</span><span>WebM</span><span>GIF</span></span>
+              <span class="mbar"><i></i></span>
+            </div>
+            <h3>MP4, WebM and GIF export</h3>
+            <p>Up to 4K, no watermark, ready for Slack, docs or a PR.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="faq" id="faq" aria-labelledby="faq-title">
+        <div class="sec-head">
+          <p class="marker"><span>00:24</span>FAQ</p>
+          <h2 id="faq-title">Questions</h2>
+        </div>
+        <div class="qa">
+          <details><summary>Is Quicksnap free?</summary><p>Yes. No account, no trial, no watermark on exports.</p></details>
+          <details><summary>Are my recordings uploaded anywhere?</summary><p>No. Recording, editing, captions and export all run in your browser, and files stay in your browser's storage.</p></details>
+          <details><summary>Which browsers does it work in?</summary><p>Chrome and Edge get every feature. Firefox and Safari can record, edit and export, without floating controls or instant replay.</p></details>
+          <details><summary>Can I record system audio?</summary><p>Yes on Windows and ChromeOS. On macOS the browser can only capture a tab's audio, so share a tab to include its sound.</p></details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="l-foot">
+      <span>© 2026 Quicksnap</span>
+      <span>Your recordings never leave your device.</span>
+      <a href="/app/">Open studio</a>
+    </footer>
+
+    <script type="module" src="/src/landing/landing.ts"></script>
   </body>
 </html>

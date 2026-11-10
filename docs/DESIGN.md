@@ -8,6 +8,7 @@ Tokens live in `src/styles/tokens.css`, motion in `src/styles/motion.css` and `s
 | `src/styles/motion.css` | Keyframes, `.anim-*` utilities, and the animations wired to app components |
 | `src/styles.css` | Components and screen layouts, built only from tokens |
 | `src/ui/motion.tsx` | `<Loader>`, `<Skeleton>`, `staggerIndex()` |
+| `src/landing/` | The marketing page at `/`, built from the same tokens (the app lives at `/app/`) |
 
 ## Palette
 Indigo `--accent` for interaction, record red `--record` for anything live. Surfaces
@@ -35,3 +36,9 @@ pair (`--clip`, `--zoom`, `--layout`, `--caption`) so users learn them.
 | Live | `.rec-dot`, `.btn.record.live` (red halo) |
 | Feedback | `toast(text, "success")` draws a check, `"error"` shakes; toasts sink out on exit |
 | Rejected input | `.anim-shake` |
+
+## Editor motifs on the landing page
+The landing page borrows the editor's own UI rather than decoration:
+- **Markers** carry a timecode in amber (`--warn`), as on the timeline, and label each section.
+- **The playhead** is record red. Feature cards play one at a time with it sweeping beneath.
+- **The selection**: the hero's key word sits in a clip selection with trim handles.

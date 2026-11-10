@@ -28,5 +28,10 @@ export default defineConfig({
     preview: { headers: isolationHeaders },
     worker: { format: "es" },
     optimizeDeps: { exclude: ["@huggingface/transformers"] },
-    build: { target: "es2022", chunkSizeWarningLimit: 900 },
+    build: {
+        target: "es2022",
+        chunkSizeWarningLimit: 900,
+        // Two pages: the static landing page at / and the app at /app/.
+        rollupOptions: { input: { landing: "index.html", app: "app/index.html" } },
+    },
 });
