@@ -16,3 +16,6 @@
 
 /og*.jpg
   Cache-Control: public, max-age=86400
+
+https://:version.quicksnap-studio.pages.dev/*
+  X-Robots-Tag: noindex
