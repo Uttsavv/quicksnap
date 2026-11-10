@@ -7,6 +7,7 @@ import { projects } from "../storage/db";
 import { formatBytes, readFile, storageEstimate } from "../storage/files";
 import { errorText, toast } from "../ui/controls";
 import { Icon } from "../ui/icons";
+import { Skeleton, staggerIndex } from "../ui/motion";
 
 function Thumb({ path }: { path?: string }) {
     const [url, setUrl] = useState<string>();
@@ -18,7 +19,8 @@ function Thumb({ path }: { path?: string }) {
             .catch(() => {});
         return () => u && URL.revokeObjectURL(u);
     }, [path]);
-    return url ? <img src={url} alt="" /> : null;
+    if (!path) return null;
+    return url ? <img src={url} alt="" /> : <Skeleton />;
 }
 
 export function Library() {
@@ -60,7 +62,7 @@ export function Library() {
             </div>
             {list && list.length === 0 && (
                 <div class="empty">
-                    <div class="col" style={{ alignItems: "center" }}>
+                    <div class="col anim-rise" style={{ alignItems: "center" }}>
                         <p style={{ margin: 0 }}>No recordings yet.</p>
                         <a class="btn primary" href="#/">
                             Start a recording
@@ -68,9 +70,22 @@ export function Library() {
                     </div>
                 </div>
             )}
-            <div class="lib-grid">
-                {list?.map((p) => (
-                    <article class="lib-card" key={p.id}>
+            {!list && (
+                <div class="lib-grid stagger" aria-busy="true">
+                    {[0, 1, 2, 3].map((i) => (
+                        <div class="lib-card" style={staggerIndex(i)}>
+                            <Skeleton class="lib-thumb" />
+                            <div class="lib-body">
+                                <Skeleton class="line" style={{ width: "60%" }} />
+                                <Skeleton class="line" style={{ width: "85%" }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div class="lib-grid stagger">
+                {list?.map((p, i) => (
+                    <article class="lib-card" key={p.id} style={staggerIndex(i)}>
                         <a class="lib-thumb" href={href({ name: "editor", id: p.id })} aria-label={`Edit ${p.name}`}>
                             <Thumb path={p.thumbnail} />
                             <span class="lib-dur">{formatTime(p.duration)}</span>

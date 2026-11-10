@@ -5,7 +5,7 @@ export function LogoMark({ size = 22 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
             <path d={LOGO_Q} fill="currentColor" />
-            <path d={LOGO_DOT} fill="#ff1900" />
+            <path class="logo-dot" d={LOGO_DOT} fill="#ff1900" />
         </svg>
     );
 }

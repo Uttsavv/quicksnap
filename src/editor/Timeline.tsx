@@ -115,6 +115,7 @@ function ClipLane() {
                 const isSel = sel?.kind === "clip" && sel.id === c.id;
                 return (
                     <button
+                        key={c.id}
                         type="button"
                         class={`tl-item clip${c.enabled ? "" : " cut"}${isSel ? " selected" : ""}`}
                         style={{ left: `${c.start * pps}px`, width: `${Math.max(2, (c.end - c.start) * pps - 1)}px` }}
@@ -206,6 +207,7 @@ function SegLane(props: { k: SegKey; kind: SegKind; cls: string; label: (s: TL[S
                 const isSel = sel?.kind === props.kind && sel.id === it.id;
                 return (
                     <button
+                        key={it.id}
                         type="button"
                         class={`tl-item ${props.cls}${it.suggested ? " suggested" : ""}${isSel ? " selected" : ""}`}
                         style={{ left: `${it.start * pps}px`, width: `${Math.max(6, (it.end - it.start) * pps)}px` }}

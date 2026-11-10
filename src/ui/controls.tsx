@@ -1,5 +1,6 @@
 import { signal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
+import { Icon } from "./icons";
 
 export function Segmented<T extends string>(props: {
     value: T;
@@ -67,7 +68,8 @@ export function Check(props: { label: ComponentChildren; checked: boolean; onCha
 interface Toast {
     id: number;
     text: string;
-    kind: "info" | "error";
+    kind: "info" | "error" | "success";
+    leaving?: boolean;
 }
 export const toasts = signal<Toast[]>([]);
 let nextToast = 1;
@@ -75,7 +77,9 @@ let nextToast = 1;
 export function toast(text: string, kind: Toast["kind"] = "info", ms = 4500) {
     const id = nextToast++;
     toasts.value = [...toasts.value, { id, text, kind }];
-    setTimeout(() => (toasts.value = toasts.value.filter((t) => t.id !== id)), ms);
+    // Mark it leaving first so it can animate out, then drop it.
+    setTimeout(() => (toasts.value = toasts.value.map((t) => (t.id === id ? { ...t, leaving: true } : t))), ms);
+    setTimeout(() => (toasts.value = toasts.value.filter((t) => t.id !== id)), ms + 200);
 }
 
 export function errorText(e: unknown): string {
@@ -88,7 +92,8 @@ export function Toasts() {
     return (
         <div class="toast-wrap" role="status" aria-live="polite">
             {toasts.value.map((t) => (
-                <div key={t.id} class={`toast ${t.kind}`}>
+                <div key={t.id} class={`toast ${t.kind}${t.leaving ? " leaving" : ""}`}>
+                    {t.kind === "success" && <Icon name="check" size={16} />}
                     {t.text}
                 </div>
             ))}

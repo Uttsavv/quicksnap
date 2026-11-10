@@ -483,7 +483,7 @@ export function Inspector({ player }: { player: Player }) {
                     </button>
                 ))}
             </div>
-            <div class="panel-body" role="tabpanel" id="inspector-panel" aria-labelledby={`tab-${tab.value}`}>
+            <div class="panel-body tab-panel" key={tab.value} role="tabpanel" id="inspector-panel" aria-labelledby={`tab-${tab.value}`}>
                 {tab.value === "style" && <StyleTab player={player} />}
                 {tab.value === "zoom" && <ZoomTab player={player} />}
                 {tab.value === "camera" && <CameraTab />}

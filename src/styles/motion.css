@@ -1,0 +1,118 @@
+/* Quicksnap motion — the animation collection.
+   Rules:
+     · Things arrive with --ease-out and leave faster with --ease-in.
+     · Only transform and opacity animate (cheap, never shifts layout).
+     · Ambient loops are reserved for "something is alive": recording, loading.
+     · Everything collapses to an instant change under prefers-reduced-motion
+       (the duration tokens go to 0 in tokens.css; loops are switched off below). */
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+@keyframes qs-fade-in { from { opacity: 0; } }
+@keyframes qs-fade-out { to { opacity: 0; } }
+@keyframes qs-rise { from { opacity: 0; transform: translateY(var(--rise)); } }
+@keyframes qs-drop { from { opacity: 0; transform: translateY(calc(-1 * var(--rise))); } }
+@keyframes qs-pop { from { opacity: 0; transform: scale(0.94); } }
+@keyframes qs-sink { to { opacity: 0; transform: translateY(var(--rise)) scale(0.98); } }
+@keyframes qs-grow-x { from { opacity: 0; transform: scaleX(0.6); } }
+@keyframes qs-tick { 0% { opacity: 0; transform: scale(1.6); } 60% { opacity: 1; } 100% { transform: scale(1); } }
+@keyframes qs-shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+@keyframes qs-sheen { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@keyframes qs-halo {
+    0% { box-shadow: 0 0 0 0 rgba(255, 25, 0, 0.55); }
+    70%, 100% { box-shadow: 0 0 0 8px rgba(255, 25, 0, 0); }
+}
+@keyframes qs-breathe { 50% { transform: scale(0.82); opacity: 0.75; } }
+@keyframes qs-scan { 0%, 100% { opacity: 0.22; } 18% { opacity: 1; } 40% { opacity: 0.22; } }
+@keyframes qs-draw { from { stroke-dashoffset: var(--len, 24); } to { stroke-dashoffset: 0; } }
+@keyframes qs-shake { 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
+@keyframes qs-dots { 0%, 20% { content: ""; } 40% { content: "."; } 60% { content: ".."; } 80%, 100% { content: "..."; } }
+
+/* ── Utilities: drop on any element to animate its entrance ────── */
+.anim-fade { animation: qs-fade-in var(--dur-enter) var(--ease-out) both; }
+.anim-rise { animation: qs-rise var(--dur-enter) var(--ease-out) both; }
+.anim-drop { animation: qs-drop var(--dur-enter) var(--ease-out) both; }
+.anim-pop { animation: qs-pop var(--dur-enter) var(--ease-spring) both; }
+.anim-shake { animation: qs-shake 360ms var(--ease-in-out); }
+/* Children enter one after another. Set --i on each child (style={{"--i": i}}). */
+.stagger > * { animation: qs-rise var(--dur-enter) var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 12) * var(--stagger)); }
+/* Waits a beat before showing, so quick loads never flash a spinner. */
+.anim-delayed { animation: qs-fade-in var(--dur-enter) var(--ease-out) 180ms both; }
+.dots::after { content: "..."; display: inline-block; width: 1.2em; text-align: left; animation: qs-dots 1.2s steps(1) infinite; }
+
+/* ── Screens arriving ──────────────────────────────────────── */
+.studio, .library, .editor { animation: qs-fade-in var(--dur-enter) var(--ease-out) both; }
+.studio > *, .editor > * { animation: qs-rise var(--dur-enter) var(--ease-out) both; }
+.studio > :nth-child(2), .editor > :nth-child(2) { animation-delay: var(--stagger); }
+.studio > :nth-child(3), .editor > :nth-child(3) { animation-delay: calc(2 * var(--stagger)); }
+.editor > .timeline { animation-delay: calc(2 * var(--stagger)); }
+
+/* ── Loader: the pixel Q scans top to bottom, the record dot breathes ── */
+.loader { flex: 1; display: grid; place-items: center; align-content: center; gap: var(--sp-6); color: var(--muted); font-size: var(--fs-base); }
+.loader-mark { color: var(--text); overflow: visible; }
+.loader-mark rect { animation: qs-scan var(--dur-loop) var(--ease-in-out) infinite; animation-delay: calc(var(--y) * 55ms); }
+.loader-mark .dot { transform-box: fill-box; transform-origin: center; animation: qs-breathe calc(var(--dur-loop) / 2) var(--ease-in-out) infinite; }
+
+/* ── Skeletons ─────────────────────────────────────────────── */
+.skeleton {
+    border-radius: var(--r-sm);
+    background: linear-gradient(100deg, var(--raised) 30%, var(--hover) 50%, var(--raised) 70%) var(--raised);
+    background-size: 200% 100%;
+    animation: qs-shimmer 1.4s linear infinite;
+}
+.skeleton.line { height: 10px; }
+
+/* ── Progress: a sheen travels along the fill so long work feels alive ── */
+.progress > div { position: relative; overflow: hidden; }
+.progress > div::after {
+    content: ""; position: absolute; inset: 0; width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    animation: qs-sheen 1.6s var(--ease-in-out) infinite;
+}
+.progress.indeterminate > div { width: 35% !important; animation: qs-indeterminate 1.3s var(--ease-in-out) infinite; }
+@keyframes qs-indeterminate { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+/* ── Recording ─────────────────────────────────────────────── */
+.rec-dot:not(.paused) { animation: qs-halo 1.2s var(--ease-out) infinite; }
+.rec-main .dot { transition: transform var(--dur-state) var(--ease-spring); }
+.rec-main:hover:not(:disabled) .dot { transform: scale(1.25); }
+.btn.record.live { animation: qs-halo 1.6s var(--ease-out) infinite; }
+.countdown { animation: qs-fade-in var(--dur-state) var(--ease-out) both; }
+.countdown .tick { display: block; animation: qs-tick var(--dur-emph) var(--ease-out) both; }
+.monitor-tag { animation: qs-drop var(--dur-enter) var(--ease-out) both; }
+
+/* ── Toasts ────────────────────────────────────────────────── */
+.toast { animation: qs-rise var(--dur-enter) var(--ease-spring) both; display: flex; align-items: center; gap: var(--sp-4); }
+.toast.leaving { animation: qs-sink calc(var(--dur-enter) * 0.7) var(--ease-in) both; }
+.toast.error { animation: qs-rise var(--dur-enter) var(--ease-spring) both, qs-shake 360ms var(--ease-in-out) var(--dur-enter); }
+.toast.success svg { color: var(--ok); flex: none; }
+.toast.success svg path { stroke-dasharray: 24; animation: qs-draw var(--dur-emph) var(--ease-out) 120ms both; }
+
+/* ── Dialogs ───────────────────────────────────────────────── */
+.modal-back { animation: qs-fade-in var(--dur-enter) var(--ease-out) both; }
+.modal { animation: qs-pop var(--dur-enter) var(--ease-spring) both; }
+
+/* ── Small state changes ───────────────────────────────────── */
+.tab-panel { animation: qs-fade-in var(--dur-enter) var(--ease-out) both; }
+.tab-panel > * { animation: qs-rise var(--dur-enter) var(--ease-out) both; }
+.inspector-tabs button svg { transition: transform var(--dur-state) var(--ease-spring); }
+.inspector-tabs button:hover svg { transform: translateY(-1px); }
+.inspector-tabs button[aria-selected="true"] svg { transform: scale(1.1); }
+.swatch, .corner-grid button { transition: transform var(--dur-press) var(--ease-out), outline-color var(--dur-state), border-color var(--dur-state); }
+.swatch:active, .corner-grid button:active, .scene:active { transform: scale(0.95); }
+.swatch[aria-pressed="true"] { animation: qs-pop var(--dur-enter) var(--ease-spring); }
+.seg button[aria-pressed="true"] { animation: qs-pop var(--dur-state) var(--ease-out); }
+.tl-item { transform-origin: left center; animation: qs-grow-x var(--dur-enter) var(--ease-out) both; transition: filter var(--dur-state), box-shadow var(--dur-state); }
+.tl-marker { animation: qs-drop var(--dur-enter) var(--ease-spring) both; }
+.callout { animation: qs-rise var(--dur-enter) var(--ease-out) both; }
+.logo .logo-dot { transform-box: fill-box; transform-origin: center; transition: transform var(--dur-state) var(--ease-spring); }
+.logo:hover .logo-dot { transform: scale(1.3); }
+.lib-thumb .skeleton { position: absolute; inset: 0; border-radius: 0; }
+.lib-thumb img { animation: qs-fade-in var(--dur-enter) var(--ease-out) both; }
+
+/* ── Reduced motion: no loops, no travel ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    .loader-mark rect, .loader-mark .dot, .skeleton, .progress > div::after,
+    .rec-dot, .btn.record.live, .dots::after { animation: none !important; }
+    .loader-mark rect { opacity: 1; }
+}

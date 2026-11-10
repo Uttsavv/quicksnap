@@ -7,6 +7,7 @@ import { projects } from "../storage/db";
 import { errorText, Segmented, toast } from "../ui/controls";
 import { Icon } from "../ui/icons";
 import { LogoMark } from "../ui/Logo";
+import { Loader } from "../ui/motion";
 import * as A from "./actions";
 import { Inspector, tab } from "./Inspector";
 import { Player } from "./player";
@@ -292,7 +293,7 @@ export function Editor({ id }: { id: string }) {
                 </a>
             </div>
         );
-    if (!p || !ready || !player) return <div class="empty">Opening recording…</div>;
+    if (!p || !ready || !player) return <Loader label="Opening recording" />;
 
     const outDur = outputDuration(p.timeline.clips);
     const outNow = sourceToOutput(p.timeline.clips, St.playhead.value);

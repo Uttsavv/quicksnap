@@ -158,7 +158,9 @@ function Monitor() {
             {flash && st !== "recording" && st !== "paused" && <span class="monitor-tag">{flash}</span>}
             {st === "countdown" && (
                 <div class="countdown" aria-live="assertive">
-                    {S.countdown.value}
+                    <span class="tick" key={S.countdown.value}>
+                        {S.countdown.value}
+                    </span>
                 </div>
             )}
             {st === "finalizing" && (
@@ -508,7 +510,7 @@ export function Studio() {
                         </button>
                     )}
                     {live ? (
-                        <button class="btn record rec-main" type="button" onClick={() => void S.stopRecording()}>
+                        <button class={`btn record rec-main${st === "recording" ? " live" : ""}`} type="button" onClick={() => void S.stopRecording()}>
                             <Icon name="stop" /> Stop
                         </button>
                     ) : st === "countdown" ? (

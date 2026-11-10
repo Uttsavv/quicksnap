@@ -61,7 +61,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
             });
             if (blob) download(blob, `${name}.${ext}`);
             if (srt && p.timeline.captions.length) download(exportSrt(p), `${name}.srt`);
-            toast(handle ? `Saved ${handle.name}` : "Export finished.");
+            toast(handle ? `Saved ${handle.name}` : "Export finished.", "success");
             onClose();
         } catch (e) {
             if (!isCancelled(e)) toast(`Export failed: ${errorText(e)}`, "error");
