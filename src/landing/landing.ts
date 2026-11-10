@@ -5,7 +5,7 @@ import "./landing.css";
      1. the header gains a solid, blurred bar once the page scrolls
      2. FAQ answers open and close with a height animation
      3. feature cards play one at a time, like clips in a playlist
-     4. the hero plays a short reel of cuts: record → the take → the timeline → the result → export */
+     4. the hero walks through the process in the editor: record → stop → accept zoom → captions → export */
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -119,23 +119,31 @@ safely("cards", () => {
     })();
 });
 
-/* ── 4. The hero reel ──────────────────────────────────────────── */
+/* ── 4. The hero demo: the process, step by step ───────────── */
 
-safely("reel", () => {
+safely("demo", () => {
     const demo = document.getElementById("demo");
     if (!demo) return;
     drawWave(demo.querySelector(".wave"));
 
-    // The cuts are laid out at 828×640 and scaled to the stage.
-    const fit = () => demo.style.setProperty("--k", String(Math.min(1, demo.clientWidth / 828)));
+    // The editor is laid out at full size and scaled to the stage; on desktop a
+    // little of the inspector bleeds off the right edge.
+    const compact = matchMedia("(max-width: 720px)");
+    const win = demo.querySelector<HTMLElement>(".win")!;
+    const fit = () => {
+        const w = demo.clientWidth;
+        const h = win.offsetHeight; // unscaled
+        // Desktop: about 880px of the window across the column (the inspector bleeds off), and never taller
+        // than the screen allows, so the whole editor shows beside the copy.
+        const k = compact.matches ? w / 720 : Math.min(1, w / 880, (innerHeight - 140) / h);
+        demo.style.setProperty("--k", String(k));
+        demo.style.setProperty("--h", `${Math.round(h * k)}px`);
+    };
+    addEventListener("resize", fit);
     new ResizeObserver(fit).observe(demo);
     fit();
 
-    if (reduced) {
-        demo.querySelector(".reel")?.remove(); // the poster frame stands still: nothing to pause
-        return;
-    }
-    playReel(demo);
+    if (!reduced) playDemo(demo); // with reduced motion the poster frame stands still
 });
 
 function drawWave(svg: SVGSVGElement | null) {
@@ -150,67 +158,37 @@ function drawWave(svg: SVGSVGElement | null) {
     svg.innerHTML = `<path d="${d}"/>`;
 }
 
-function playReel(demo: HTMLElement) {
-    const cuts = demo.querySelector<HTMLElement>(".cuts")!;
+function playDemo(demo: HTMLElement) {
+    const win = demo.querySelector<HTMLElement>(".win")!;
     const cursor = demo.querySelector<HTMLElement>(".cursor")!;
-    const clock = demo.querySelector<HTMLElement>(".big-clock")!;
+    const clock = demo.querySelector<HTMLElement>(".clock")!;
     const recLabel = demo.querySelector<HTMLElement>(".rec-label")!;
-    const label = demo.querySelector<HTMLElement>(".reel-label")!;
-    const bars = [...demo.querySelectorAll<HTMLElement>(".reel-bars i")];
-    const pause = demo.querySelector<HTMLButtonElement>(".reel-pause")!;
 
+    // The demo only runs while it's on screen.
     let visible = false;
-    let userPaused = false;
-    const sync = () => demo.classList.toggle("is-paused", !visible || userPaused);
     onScreen(demo, (v) => {
         visible = v;
-        sync();
+        demo.classList.toggle("is-paused", !v);
     });
-    pause.addEventListener("click", () => {
-        userPaused = !userPaused;
-        demo.classList.toggle("user-paused", userPaused);
-        pause.setAttribute("aria-pressed", String(userPaused));
-        pause.setAttribute("aria-label", userPaused ? "Play the demo" : "Pause the demo");
-        sync();
-    });
-    const sleep = makeSleep(() => visible && !userPaused);
+    const sleep = makeSleep(() => visible);
 
-    const FLAGS = ["data-recording", "data-suggest", "data-accept", "data-caps", "data-zoom", "data-captions", "data-playing", "data-exporting", "data-done"] as const;
+    const FLAGS = ["data-suggest", "data-accept", "data-caps", "data-zoom", "data-captions", "data-playing", "data-exporting", "data-done"] as const;
     type Flag = (typeof FLAGS)[number];
     const on = (f: Flag) => demo.setAttribute(f, "");
+    const focus = (zone: "top" | "viewer" | "bottom" | null) => (zone ? (demo.dataset.focus = zone) : demo.removeAttribute("data-focus"));
 
-    /** Cut to a shot, and advance the reel's progress bar. */
-    function cut(name: string, index: number, title: string, ms: number) {
-        demo.dataset.cut = name;
-        label.textContent = title;
-        bars.forEach((b, i) => {
-            b.classList.toggle("done", i < index);
-            b.classList.remove("now");
-        });
-        void bars[index].offsetWidth;
-        bars[index].style.setProperty("--dur", `${ms}ms`);
-        bars[index].classList.add("now");
-        cursor.classList.remove("on");
-    }
+    /** Steps are named in the script below so the story reads top to bottom. */
+    const step = (_index: number, _name: string, _ms: number) => {};
 
-    /** An element's box in the cuts' own (unscaled) coordinates. */
+    /** An element's box in the window's own (unscaled) coordinates. */
     function local(el: Element) {
         const k = parseFloat(demo.style.getPropertyValue("--k")) || 1;
         const r = el.getBoundingClientRect();
-        const c = cuts.getBoundingClientRect();
-        return { x: (r.left - c.left) / k, y: (r.top - c.top) / k, w: r.width / k, h: r.height / k };
+        const w = win.getBoundingClientRect();
+        return { x: (r.left - w.left) / k, y: (r.top - w.top) / k, w: r.width / k, h: r.height / k };
     }
     const target = (name: string) => demo.querySelector<HTMLElement>(`[data-target="${name}"]`)!;
-
-    /** The cursor enters from below, then every move ends in a click. */
     async function move(name: string, ms = 900) {
-        if (!cursor.classList.contains("on")) {
-            cursor.style.setProperty("--move", "0ms");
-            cursor.style.setProperty("--x", "640px");
-            cursor.style.setProperty("--y", "600px");
-            void cursor.offsetWidth;
-            cursor.classList.add("on");
-        }
         const b = local(target(name));
         cursor.style.setProperty("--move", `${ms}ms`);
         cursor.style.setProperty("--x", `${b.x + b.w * 0.55}px`);
@@ -237,64 +215,77 @@ function playReel(demo: HTMLElement) {
     // Start from the empty studio without animating the poster away.
     demo.classList.add("no-anim");
     reset();
-    demo.dataset.cut = "rec";
+    focus("bottom");
     void demo.offsetWidth;
     demo.classList.remove("no-anim");
 
     (async () => {
+        await sleep(700);
+        cursor.classList.add("on");
         for (;;) {
-            // 1. Record
-            reset();
-            cut("rec", 0, "Record", 4200);
-            await sleep(900);
+            // 1. Record: one click, then the take runs
+            step(0, "Hit Record", 5200);
+            focus("bottom");
+            await sleep(500);
             await move("record", 1000);
             await click("record");
-            on("data-recording");
+            demo.dataset.phase = "rec";
             recLabel.textContent = "Stop";
-            for (let s = 1; s <= 8; s++) {
+            await sleep(400);
+            focus("viewer");
+            for (let s = 1; s <= 12; s++) {
                 await sleep(260);
                 clock.textContent = fmt(s);
             }
 
-            // 2. The take: the presenter clicks Share
-            cut("take", 1, "The take", 4000);
-            demo.dataset.phase = "rec";
-            await sleep(4000);
-
-            // 3. The timeline: accept the suggested zoom, add captions
+            // 2. Stop: the editor opens with the take
+            step(1, "Stop when you're done", 2400);
+            focus("bottom");
+            await move("record", 800);
+            await click("record");
             demo.dataset.phase = "edit";
-            cut("tl", 2, "Smart zoom and captions", 4600);
-            await sleep(700);
+            await sleep(1300);
+
+            // 3. Quicksnap found the click; accept its zoom
+            step(2, "Accept the suggested zoom", 4200);
             on("data-suggest");
-            await sleep(500);
-            await move("zoom", 1000);
+            await sleep(600);
+            await move("zoom", 900);
             await click("zoom");
             on("data-accept");
-            await sleep(500);
-            await move("captions", 800);
+            await sleep(300);
+            focus("viewer");
+            on("data-zoom");
+            await sleep(2000);
+
+            // 4. Captions in one click
+            step(3, "Add captions in one click", 4600);
+            focus("bottom");
+            await move("captions", 900);
             await click("captions");
             on("data-caps");
-            await sleep(1100);
-
-            // 4. The result: the zoom lands, the captions play
-            cut("take", 3, "The result", 4200);
-            await sleep(700);
-            on("data-zoom");
-            await sleep(900);
+            await sleep(400);
+            focus("viewer");
             on("data-captions");
             await sleep(300);
             on("data-playing");
-            await sleep(2300);
+            await sleep(2600);
 
-            // 5. Export, and hold the payoff
-            cut("export", 4, "Export", 4200);
-            await sleep(900);
-            await move("export", 900);
+            // 5. Export
+            step(4, "Export. No watermark.", 5200);
+            focus("top");
+            await move("export", 1000);
             await click("export");
             on("data-exporting");
             await sleep(1400);
             on("data-done");
-            await sleep(1900);
+            await sleep(1200);
+            focus(null);
+            await sleep(1600);
+            await move("again", 700);
+            await click("again");
+            reset();
+            await sleep(600);
         }
     })();
 }

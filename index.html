@@ -104,99 +104,121 @@
           </dl>
         </div>
 
-        <!-- Faux demo: a short reel of cuts, each one piece of Quicksnap shown big.
-             The markup is the poster frame (the finished edit); landing.ts plays the reel. -->
-        <div class="demo" id="demo" data-cut="take" data-suggest data-accept data-caps data-zoom data-captions data-done data-enter>
+        <!-- Faux demo: the whole Quicksnap editor, always on screen. Each beat pulls
+             focus to the panel in use while the rest softens, like depth of field.
+             The markup is the poster frame (the finished edit); landing.ts plays the story. -->
+        <div class="demo" id="demo" data-phase="edit" data-suggest data-accept data-caps data-zoom data-captions data-done data-enter>
           <div class="bokeh" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="cuts" aria-hidden="true">
-            <!-- 1. Record -->
-            <section class="cut c-rec">
-              <p class="c-label"><span class="rec-dot"></span>Studio · Screen + bubble</p>
-              <p class="big-clock">00:00:00</p>
-              <div class="c-rec-row">
-                <span class="big-rec" data-target="record"><i></i><span class="rec-label">Record</span></span>
-                <span class="big-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              </div>
-              <div class="c-cam"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
-            </section>
-
-            <!-- 2 and 4. The take, then the edited result -->
-            <section class="cut c-take">
-              <div class="canvas">
-                <div class="layer">
+          <div class="win" aria-hidden="true">
+            <div class="w-top">
+              <svg class="ic" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
+              <span class="w-title">Product walkthrough</span>
+              <span class="w-meta">0:12 · 1080p</span>
+              <span class="grow"></span>
+              <span class="w-btn ghost w-new" data-target="again"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14 M5 12h14" /></svg>New recording</span>
+              <span class="w-btn primary w-export" data-target="export"><span class="ex-fill"></span><span class="lbl lbl-export"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12 m-5-5 5 5 5-5 M5 21h14" /></svg>Export</span><span class="lbl lbl-saved"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>Saved</span></span>
+            </div>
+            <div class="w-grid">
+              <section class="w-panel w-viewer">
+                <div class="stage">
+                  <div class="canvas">
+                  <div class="layer">
                   <i class="bg"></i>
                   <div class="frame">
-                    <div class="shot">
-                      <div class="b-chrome"><i></i><i></i><i></i><span class="b-url">acme.app/reports</span></div>
-                      <div class="b-page">
-                        <div class="b-head">
-                          <div><small>Reports</small><b>Weekly overview</b></div>
-                          <span class="b-share">Share report</span>
-                        </div>
-                        <div class="b-stats">
-                          <div><small>Visitors</small><b>48.2k</b><em>+12%</em></div>
-                          <div><small>Sign-ups</small><b>3,914</b><em>+8%</em></div>
-                          <div><small>Churn</small><b>1.9%</b><em>−0.4%</em></div>
-                        </div>
-                        <div class="b-chart">
-                          <svg viewBox="0 0 200 60" preserveAspectRatio="none">
-                            <path class="grid" d="M0 15H200M0 30H200M0 45H200" />
-                            <path class="area" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7 V60 H0Z" />
-                            <path class="line" pathLength="1" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div class="pop">
-                        <b>Share “Weekly overview”</b>
-                        <div class="pop-link"><span>acme.app/r/weekly</span><em>Copy link</em></div>
-                        <div class="pop-people"><i></i><i></i><i></i><span>Design team · 8 people</span></div>
-                      </div>
-                      <span class="ripple"></span>
-                      <svg class="p-ptr" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9.5 19z" /></svg>
-                    </div>
+                  <div class="shot">
+                  <div class="b-chrome"><i></i><i></i><i></i><span class="b-url">acme.app/reports</span></div>
+                  <div class="b-page">
+                  <div class="b-head">
+                  <div><small>Reports</small><b>Weekly overview</b></div>
+                  <span class="b-share">Share report</span>
+                  </div>
+                  <div class="b-stats">
+                  <div><small>Visitors</small><b>48.2k</b><em>+12%</em></div>
+                  <div><small>Sign-ups</small><b>3,914</b><em>+8%</em></div>
+                  <div><small>Churn</small><b>1.9%</b><em>−0.4%</em></div>
+                  </div>
+                  <div class="b-chart">
+                  <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+                  <path class="grid" d="M0 15H200M0 30H200M0 45H200" />
+                  <path class="area" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7 V60 H0Z" />
+                  <path class="line" pathLength="1" d="M0 50 C20 47 30 44 45 46 S70 36 85 38 110 27 125 30 150 17 165 19 185 9 200 7" />
+                  </svg>
+                  </div>
+                  </div>
+                  <div class="pop">
+                  <b>Share “Weekly overview”</b>
+                  <div class="pop-link"><span>acme.app/r/weekly</span><em>Copy link</em></div>
+                  <div class="pop-people"><i></i><i></i><i></i><span>Design team · 8 people</span></div>
+                  </div>
+                  <span class="ripple"></span>
+                  <svg class="p-ptr" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9.5 19z" /></svg>
+                  </div>
+                  </div>
+                  </div>
+                  <div class="bubble"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
+                  <span class="rec-tag"><i></i>REC</span>
+                  <p class="caption"><span style="--w: 0">Hit</span> <span style="--w: 1">Share</span> <span style="--w: 2">and</span> <span style="--w: 3">the</span> <span style="--w: 4">team</span> <span style="--w: 5">gets</span> <span style="--w: 6">it</span></p>
                   </div>
                 </div>
-                <div class="bubble"><svg viewBox="0 0 40 40"><circle cx="20" cy="16" r="7" /><path d="M6 40c1-9 7-14 14-14s13 5 14 14z" /></svg></div>
-                <span class="rec-tag"><i></i>REC</span>
-                <p class="caption"><span style="--w: 0">Hit</span> <span style="--w: 1">Share</span> <span style="--w: 2">and</span> <span style="--w: 3">the</span> <span style="--w: 4">team</span> <span style="--w: 5">gets</span> <span style="--w: 6">it</span></p>
-              </div>
-            </section>
+              </section>
 
-            <!-- 3. The timeline: a suggested zoom, then captions -->
-            <section class="cut c-tl">
-              <div class="tl-bar">
-                <span class="chip-found"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>1 zoom suggested</span>
-                <span class="big-btn" data-target="captions"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
-              </div>
-              <div class="big-tl">
-                <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18v12H3z M8 6v12 M16 6v12" /></svg>Video</span>
-                <div class="lane"><span class="item clip">Recording<svg class="wave" viewBox="0 0 120 20" preserveAspectRatio="none"></svg></span></div>
-                <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>Zoom</span>
-                <div class="lane"><span class="item zoom" data-target="zoom"><span class="z-sug">Suggested</span><span class="z-on">Zoom 2×</span></span></div>
-                <span class="th"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
-                <div class="lane"><span class="item cap" style="--i: 0; left: 20%; width: 10%">Hit Share</span><span class="item cap" style="--i: 1; left: 31%; width: 13%">and the team</span><span class="item cap" style="--i: 2; left: 45%; width: 9%">gets it</span></div>
-                <i class="playhead"></i>
-              </div>
-            </section>
+              <aside class="w-panel w-insp">
+                <div class="tabs">
+                  <span class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5 0-.9-.7-1.3-.7-2.2 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4c0-4.7-4-8.7-9-8.7z" /></svg>Style</span>
+                  <span><svg class="ic" viewBox="0 0 24 24"><path d="M3 7h12v10H3z M15 10l6-3v10l-6-3" /></svg>Camera</span>
+                  <span><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
+                </div>
+                <div class="insp-body">
+                  <p class="g-title">Background</p>
+                  <div class="sw"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5"></span></div>
+                  <p class="g-title">Frame</p>
+                  <div class="fld"><span>Padding</span><span class="mono">48</span></div>
+                  <div class="rng" style="--v: 46%"></div>
+                  <div class="fld"><span>Roundness</span><span class="mono">12</span></div>
+                  <div class="rng" style="--v: 30%"></div>
+                  <div class="fld"><span>Shadow</span><i class="tgl on"></i></div>
+                  <p class="g-title">Camera</p>
+                  <div class="fld"><span>Shape</span><span class="mono">Circle</span></div>
+                  <div class="fld"><span>Size</span><span class="mono">18%</span></div>
+                  <div class="rng" style="--v: 38%"></div>
+                </div>
+              </aside>
 
-            <!-- 5. Export -->
-            <section class="cut c-export">
-              <div class="ex-card">
-                <p class="ex-title">Export</p>
-                <div class="ex-seg"><span class="on">MP4</span><span>WebM</span><span>GIF</span></div>
-                <div class="ex-row"><span>Resolution</span><b>1080p</b></div>
-                <div class="ex-row"><span>Estimated size</span><b>18 MB</b></div>
-                <span class="ex-btn" data-target="export"><span class="ex-fill"></span><span class="lbl lbl-export">Export video</span><span class="lbl lbl-saved"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>product-walkthrough.mp4 saved</span></span>
-              </div>
-            </section>
-
+              <section class="w-panel w-bottom">
+                <div class="studio-bottom">
+                  <div class="scenes">
+                    <span class="scene"><i class="sa"><b class="s"></b></i>Screen only<kbd>1</kbd></span>
+                    <span class="scene on"><i class="sa"><b class="s"></b><b class="c round"></b></i>Screen + bubble<kbd>2</kbd></span>
+                    <span class="scene"><i class="sa"><b class="s half"></b><b class="c side"></b></i>Side by side<kbd>3</kbd></span>
+                    <span class="scene"><i class="sa"><b class="c full"></b></i>Camera only<kbd>4</kbd></span>
+                  </div>
+                  <div class="dockbar">
+                    <span class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                    <span class="dock-mid"><span class="clock">00:00:00</span><span class="w-btn rec" data-target="record"><i></i><span class="rec-label">Record</span></span></span>
+                    <span class="kbd-hint"><kbd>⌥R</kbd> record</span>
+                  </div>
+                </div>
+                <div class="tl">
+                  <div class="tl-tools">
+                    <span class="chip-found"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>1 zoom suggested</span>
+                    <span class="w-btn sm" data-target="captions"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
+                    <span class="grow"></span>
+                    <span class="tc"><b>0:04</b> / 0:12</span>
+                  </div>
+                  <div class="tl-rows">
+                    <span class="tl-head"></span><div class="ruler"><i>0:00</i><i>0:03</i><i>0:06</i><i>0:09</i><i>0:12</i></div>
+                    <span class="tl-head"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18v12H3z M8 6v12 M16 6v12" /></svg>Video</span>
+                    <div class="lane"><span class="item clip">Recording<svg class="wave" viewBox="0 0 120 20" preserveAspectRatio="none"></svg></span></div>
+                    <span class="tl-head"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5 M11 8v6 M8 11h6" /></svg>Zoom</span>
+                    <div class="lane"><span class="item zoom" data-target="zoom"><span class="z-sug">Suggested</span><span class="z-on">Zoom 2×</span></span></div>
+                    <span class="tl-head"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M7 13h3 M14 13h3 M7 9h10" /></svg>Captions</span>
+                    <div class="lane"><span class="item cap" style="--i: 0; left: 24%; width: 11%">Hit Share</span><span class="item cap" style="--i: 1; left: 36%; width: 14%">and the team</span><span class="item cap" style="--i: 2; left: 51%; width: 9%">gets it</span></div>
+                    <i class="playhead"></i>
+                  </div>
+                </div>
+              </section>
+            </div>
             <div class="cursor"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9.5 19z" /></svg></div>
-          </div>
-
-          <div class="reel">
-            <button class="reel-pause" type="button" aria-label="Pause the demo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M7 5h3v14H7z M14 5h3v14h-3z" /><path class="i-play" d="M8 5v14l11-7z" /></svg></button>
-            <span class="reel-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="reel-label" aria-hidden="true">Zoom and captions</span>
           </div>
         </div>
       </section>
