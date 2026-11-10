@@ -154,8 +154,12 @@ async function openDevice(kind: DeviceKind, pref: string, constraints: (id?: str
 }
 
 export async function chooseScreen() {
+    // Chrome otherwise brings the shared window or tab to the front, pulling the user out of the studio.
+    const Ctl = (window as { CaptureController?: new () => { setFocusBehavior(b: string): void } }).CaptureController;
+    const controller = Ctl ? new Ctl() : undefined;
     try {
         const stream = await navigator.mediaDevices.getDisplayMedia({
+            controller,
             video: { frameRate: { ideal: frameRate.value }, width: { max: 3840 }, height: { max: 2160 } },
             audio: systemAudioOn.value
                 ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
@@ -165,6 +169,12 @@ export async function chooseScreen() {
             systemAudio: "include",
             surfaceSwitching: "include",
         } as DisplayMediaStreamOptions);
+        // Must run right after the promise resolves; throws for entire-screen captures, which never move focus anyway.
+        try {
+            controller?.setFocusBehavior("no-focus-change");
+        } catch {
+            /* not a window or tab */
+        }
         stopTracks(screenStream.value);
         screenStream.value = stream;
         stream.getVideoTracks()[0].addEventListener("ended", onScreenEnded);
