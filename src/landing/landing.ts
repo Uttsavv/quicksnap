@@ -4,7 +4,7 @@ import "./landing.css";
    others down, and the page reads fine with none of them:
      1. the header gains a solid, blurred bar once the page scrolls
      2. FAQ answers open and close with a height animation
-     3. feature cards play one at a time, like clips in a playlist
+     3. feature cards loop together, and pause while off screen
      4. the hero walks through the process in the editor: record → stop → accept zoom → captions → export */
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -79,44 +79,75 @@ safely("faq", () => {
     }
 });
 
-/* ── 3. Feature cards: one take at a time ──────────────────────── */
+/* ── 3. Feature cards: all loop at once, paused off screen ─────── */
 
 safely("cards", () => {
-    const cards = [...document.querySelectorAll<HTMLElement>(".card")];
-    if (!cards.length || reduced) return;
-    const TAKE = 3200;
-    const GAP = 500;
-    let visible = false;
-    let hovered: HTMLElement | null = null;
-    let i = 0;
-    const sleep = makeSleep(() => visible && !hovered);
+    const grid = document.querySelector(".cards");
+    if (!grid) return;
+    onScreen(grid, (v) => grid.classList.toggle("is-paused", !v));
+});
 
-    function play(card: HTMLElement) {
-        for (const c of cards) c.classList.remove("play");
-        void card.offsetWidth; // restart the take
-        card.classList.add("play");
+/* ── 3b. Hero → features: playhead scrubs the ruler, the section rises in ── */
+
+/** Sets --p on `el` from 0 to 1 as it scrolls from the bottom of the screen up to the top third. */
+function scrub(el: HTMLElement, onProgress?: (p: number) => void) {
+    if (reduced) {
+        el.style.setProperty("--p", "1");
+        onProgress?.(1);
+        return;
     }
+    let queued = false;
+    const sync = () => {
+        queued = false;
+        const top = el.getBoundingClientRect().top;
+        const p = Math.min(1, Math.max(0, (innerHeight - top) / (innerHeight * 0.66)));
+        el.style.setProperty("--p", p.toFixed(4));
+        onProgress?.(p);
+    };
+    const queue = () => {
+        if (!queued) (queued = true), requestAnimationFrame(sync);
+    };
+    addEventListener("scroll", queue, { passive: true });
+    addEventListener("resize", queue);
+    sync();
+}
 
-    onScreen(document.querySelector(".cards")!, (v) => (visible = v));
-    for (const card of cards) {
-        card.addEventListener("pointerenter", () => {
-            hovered = card;
-            play(card);
-        });
-        card.addEventListener("pointerleave", () => {
-            if (hovered === card) hovered = null;
-        });
+/** Hides a section until it scrolls in, then lets it rise. Skipped when it's already on screen (deep links). */
+function riseIn(section: HTMLElement) {
+    if (reduced || section.getBoundingClientRect().top <= innerHeight * 0.85) return;
+    section.classList.add("pre");
+    const io = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        section.classList.remove("pre");
+        io.disconnect();
+    }, { rootMargin: "0px 0px -20% 0px" });
+    io.observe(section);
+}
+
+safely("seam", () => {
+    const seam = document.querySelector<HTMLElement>(".seam");
+    if (seam) scrub(seam);
+    const features = document.querySelector<HTMLElement>(".features");
+    if (features) riseIn(features);
+});
+
+/* ── 3c. Features → FAQ: a voice track plays and its caption lands word by word ── */
+
+safely("voice", () => {
+    const voice = document.querySelector<HTMLElement>(".seam-voice");
+    if (!voice) return;
+    let d = "";
+    for (let i = 0; i < 120; i++) {
+        // Three spoken words: louder in the middle of each, quiet in the gaps.
+        const word = Math.max(0, Math.sin((i / 120) * Math.PI * 3 - 0.3));
+        const h = 1.5 + 20 * word * (0.5 + 0.5 * Math.abs(Math.sin(i * 1.3) * Math.cos(i * 0.47)));
+        d += `M${i * 2 + 0.4} ${12 - h / 2}h1.2v${h}h-1.2z`;
     }
-
-    (async () => {
-        for (;;) {
-            await sleep(GAP);
-            play(cards[i]);
-            await sleep(TAKE);
-            cards[i].classList.remove("play");
-            i = (i + 1) % cards.length;
-        }
-    })();
+    for (const svg of voice.querySelectorAll("svg")) svg.innerHTML = `<path d="${d}"/>`;
+    const words = [...voice.querySelectorAll<HTMLElement>(".seam-cap span")];
+    scrub(voice, (p) => words.forEach((w, k) => w.classList.toggle("said", p >= ((k + 0.6) / words.length) * 0.92)));
+    const faq = document.querySelector<HTMLElement>(".faq");
+    if (faq) riseIn(faq);
 });
 
 /* ── 4. The hero demo: the process, step by step ───────────── */

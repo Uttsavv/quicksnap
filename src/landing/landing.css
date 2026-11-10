@@ -6,7 +6,7 @@
    because the demo is the dark app. Editor motifs, used as UI, not decoration:
      · the hero's key word sits in a clip selection with trim handles
      · section labels are timeline markers with a timecode
-     · feature cards play one at a time, a red playhead sweeping under each */
+     · feature cards all loop at once, each a beat behind the last */
 
 .landing {
     --app: #1a1a1a;
@@ -79,7 +79,7 @@ h1, h2, h3, p { margin: 0; }
 .hero {
     min-height: calc(100svh - 72px);
     display: grid; grid-template-columns: minmax(380px, 460px) minmax(0, 1fr); align-items: center; gap: 72px;
-    padding: 24px var(--gutter) 72px;
+    padding: 24px var(--gutter) 40px;
 }
 .hero-copy { display: flex; flex-direction: column; align-items: flex-start; }
 .news {
@@ -370,8 +370,49 @@ kbd { font: 500 10.5px var(--mono); color: var(--muted); border: 1px solid var(-
 .demo.is-paused, .demo.is-paused * { animation-play-state: paused !important; }
 .demo.no-anim, .demo.no-anim * { transition: none !important; }
 
+/* ══ Hero → features: the editor's timeline ruler. As the page scrolls the red
+   playhead scrubs 00:00 → 00:12 (--p, set by landing.ts) and lands on the
+   features' 00:12 marker; the section then rises in. */
+.seam { --p: 0; position: relative; margin: 0 var(--gutter); height: 40px; }
+.ruler {
+    position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: flex-start;
+    font: 500 11px var(--mono); color: var(--ink-3); border-bottom: 1px solid var(--edge);
+    background: repeating-linear-gradient(90deg, var(--edge) 0 1px, transparent 1px calc(100% / 24)) bottom / 100% 8px no-repeat,
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px calc(100% / 4)) bottom / 100% 14px no-repeat;
+}
+.ruler span { transform: translateX(-50%); padding-top: 2px; }
+.ruler span:first-child { transform: none; }
+.ruler span:last-child { transform: translateX(-100%); color: var(--warn); opacity: calc(var(--p) * var(--p)); }
+.seam-ph { position: absolute; top: 4px; bottom: -6px; left: calc(var(--p) * 100%); width: 1.5px; margin-left: -0.75px; background: var(--record); }
+.seam-ph::before { content: ""; position: absolute; top: 14px; left: -5.5px; width: 12px; height: 11px; background: var(--record); clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%); }
+.seam::after { content: ""; position: absolute; left: 0; bottom: -1px; height: 1px; width: calc(var(--p) * 100%); background: linear-gradient(90deg, transparent, rgba(240, 68, 56, 0.6)); }
+
+.features .sec-head, .features .card { transition: opacity 700ms var(--enter), transform 700ms var(--enter); }
+.features.pre .sec-head, .features.pre .card { opacity: 0; transform: translateY(24px); }
+.features .card:nth-child(2) { transition-delay: 60ms; } .features .card:nth-child(3) { transition-delay: 120ms; }
+.features .card:nth-child(4) { transition-delay: 140ms; } .features .card:nth-child(5) { transition-delay: 200ms; } .features .card:nth-child(6) { transition-delay: 260ms; }
+
+/* ══ Features → FAQ: a voice track. The waveform lights up as the page scrolls
+   (--p) and the caption above it lands word by word, like the editor's captions. */
+.seam-voice { --p: 0; margin: 48px var(--gutter) 0; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.seam-cap { margin: 0; padding: 8px 16px; border-radius: 10px; background: rgba(10, 10, 12, 0.85); box-shadow: 0 0 0 1px var(--line); font-size: clamp(18px, 2vw, 24px); font-weight: 600; letter-spacing: -0.01em; }
+.seam-cap span { display: inline-block; color: rgba(255, 255, 255, 0.18); transform: translateY(3px); transition: color 280ms var(--ease-out), transform 280ms var(--ease-out); }
+.seam-cap span.said { color: #fff; transform: none; }
+.seam-track { position: relative; width: 100%; height: 48px; }
+.seam-track svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: rgba(255, 255, 255, 0.1); }
+.seam-track svg.on { fill: var(--wave); clip-path: inset(0 calc((1 - var(--p)) * 100%) 0 0); }
+.seam-track .seam-ph { top: -6px; bottom: -6px; }
+.seam-track .seam-ph::before { top: -6px; }
+.seam-track { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8% 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8% 92%, transparent); }
+
+.faq .sec-head, .faq .qa { transition: opacity 700ms var(--enter), transform 700ms var(--enter); }
+.faq .qa { transition-delay: 100ms; }
+.faq.pre .sec-head, .faq.pre .qa { opacity: 0; transform: translateY(24px); }
+
 /* ══ Sections ════════════════════════════════════════════════ */
 .features, .faq { padding: 120px var(--gutter) 72px; }
+.features { padding-top: 56px; padding-bottom: 24px; scroll-margin-top: 40px; }
+.faq { padding-top: 72px; }
 .sec-head { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 48px; }
 h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.04em; font-weight: 500; max-width: 15em; text-wrap: balance; }
 
@@ -382,31 +423,30 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
 
 .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .card { padding: 12px 12px 32px; border-radius: 20px; background: #171717; border: 1px solid var(--edge); display: flex; flex-direction: column; transition: border-color var(--dur-state) var(--ease-out); }
-.card.play { border-color: rgba(255, 255, 255, 0.16); }
 .card h3 { margin: 24px 20px 0; font-size: 20px; line-height: 1.3; font-weight: 500; letter-spacing: -0.015em; }
 .card p { margin: 8px 20px 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); max-width: 46ch; }
 
 /* Each panel holds one fragment of the product. The poster (static) state is
-   the result; .play runs one 3.2 s take that ends on it, with the editor's red
-   playhead sweeping along the bottom. One card plays at a time. */
+   the result. With motion on, every card loops its take at the same time, each
+   a beat behind the last, and settles back to the start before repeating.
+   They pause while the grid is off screen (.cards.is-paused). */
 .viz {
-    --cyc: 3200ms;
+    --cyc: 4800ms;
     position: relative; height: 200px; border-radius: 12px; overflow: hidden;
     display: grid; place-items: center; font-size: 13px; color: var(--text);
     background: radial-gradient(120% 90% at 20% 0%, rgba(245, 169, 107, 0.11), transparent 60%), radial-gradient(90% 90% at 100% 100%, rgba(63, 183, 160, 0.09), transparent 60%), var(--app);
 }
-.viz::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--record); transform: scaleX(0); transform-origin: left; opacity: 0; }
-.card.play .viz::after { opacity: 1; animation: l-sweep var(--cyc) linear both; }
-@keyframes l-sweep { to { transform: scaleX(1); } }
-.card.play .viz * { animation-duration: var(--cyc); animation-iteration-count: 1; animation-fill-mode: both; animation-timing-function: var(--ease-in-out); }
+.card .viz * { animation-duration: var(--cyc); animation-iteration-count: infinite; animation-fill-mode: both; animation-timing-function: var(--ease-in-out); animation-delay: calc(var(--i, 0) * -600ms); }
+.card:nth-child(2) { --i: 1; } .card:nth-child(3) { --i: 2; } .card:nth-child(4) { --i: 3; } .card:nth-child(5) { --i: 4; } .card:nth-child(6) { --i: 5; }
+.cards.is-paused .viz * { animation-play-state: paused !important; }
 
 /* 1. Layouts */
 .mc { position: relative; width: 74%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: linear-gradient(135deg, #f5a96b, #e8667e 50%, #b0508e); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35); }
 .mc i { position: absolute; display: block; }
 .m-scr { left: 9%; top: 10%; width: 82%; height: 80%; border-radius: 4px; background: #fbfbfc; box-shadow: inset 0 9px 0 #eceef1; }
 .m-cam { right: 4%; bottom: 6%; width: 24%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #7d8698, #3b414f 75%); box-shadow: 0 0 0 2px #fff; }
-.card.play .m-scr { animation-name: l-scr; }
-.card.play .m-cam { animation-name: l-cam; }
+.card .m-scr { animation-name: l-scr; }
+.card .m-cam { animation-name: l-cam; }
 @keyframes l-scr {
     0%, 22% { left: 9%; top: 10%; width: 82%; height: 80%; opacity: 1; }
     32%, 54% { left: 5%; top: 18%; width: 58%; height: 64%; opacity: 1; }
@@ -423,18 +463,18 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
 /* 2. Captions: words land as they're spoken */
 .v-cap p { margin: 0; padding: 8px 14px; border-radius: 8px; background: rgba(10, 10, 12, 0.85); box-shadow: 0 0 0 1px var(--line); font-size: 17px; font-weight: 600; color: #fff; max-width: none; }
 .v-cap p span { display: inline-block; }
-.card.play .v-cap p span:nth-child(1) { animation-name: l-w1; animation-timing-function: linear; }
-.card.play .v-cap p span:nth-child(2) { animation-name: l-w2; animation-timing-function: linear; }
-.card.play .v-cap p span:nth-child(3) { animation-name: l-w3; animation-timing-function: linear; }
-.card.play .v-cap p span:nth-child(4) { animation-name: l-w4; animation-timing-function: linear; }
-.card.play .v-cap p span:nth-child(5) { animation-name: l-w5; animation-timing-function: linear; }
-.card.play .v-cap p span:nth-child(6) { animation-name: l-w6; animation-timing-function: linear; }
-@keyframes l-w1 { 0%, 5% { opacity: 0.15; } 9%, 100% { opacity: 1; } }
-@keyframes l-w2 { 0%, 17% { opacity: 0.15; } 21%, 100% { opacity: 1; } }
-@keyframes l-w3 { 0%, 29% { opacity: 0.15; } 33%, 100% { opacity: 1; } }
-@keyframes l-w4 { 0%, 41% { opacity: 0.15; } 45%, 100% { opacity: 1; } }
-@keyframes l-w5 { 0%, 53% { opacity: 0.15; } 57%, 100% { opacity: 1; } }
-@keyframes l-w6 { 0%, 65% { opacity: 0.15; } 69%, 100% { opacity: 1; } }
+.card .v-cap p span:nth-child(1) { animation-name: l-w1; animation-timing-function: linear; }
+.card .v-cap p span:nth-child(2) { animation-name: l-w2; animation-timing-function: linear; }
+.card .v-cap p span:nth-child(3) { animation-name: l-w3; animation-timing-function: linear; }
+.card .v-cap p span:nth-child(4) { animation-name: l-w4; animation-timing-function: linear; }
+.card .v-cap p span:nth-child(5) { animation-name: l-w5; animation-timing-function: linear; }
+.card .v-cap p span:nth-child(6) { animation-name: l-w6; animation-timing-function: linear; }
+@keyframes l-w1 { 0%, 5% { opacity: 0.15; } 9%, 86% { opacity: 1; } 96%, 100% { opacity: 0.15; } }
+@keyframes l-w2 { 0%, 14% { opacity: 0.15; } 18%, 86% { opacity: 1; } 96%, 100% { opacity: 0.15; } }
+@keyframes l-w3 { 0%, 23% { opacity: 0.15; } 27%, 86% { opacity: 1; } 96%, 100% { opacity: 0.15; } }
+@keyframes l-w4 { 0%, 32% { opacity: 0.15; } 36%, 86% { opacity: 1; } 96%, 100% { opacity: 0.15; } }
+@keyframes l-w5 { 0%, 41% { opacity: 0.15; } 45%, 86% { opacity: 1; } 96%, 100% { opacity: 0.15; } }
+@keyframes l-w6 { 0%, 50% { opacity: 0.15; } 54%, 86% { opacity: 1; } 96%, 100% { opacity: 0.15; } }
 .mini-chip { position: absolute; left: 16px; top: 16px; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--r); background: var(--panel); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 12px; color: var(--text-2); }
 .mini-chip svg { width: 12px; height: 12px; fill: none; stroke: var(--ok); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -448,13 +488,14 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
 .mz-in i.hot { grid-column: 2; grid-row: 1; justify-self: end; width: 34px; height: 12px; background: #1d1f24; }
 .mz-lane { position: relative; height: 22px; border-radius: var(--r-sm); background: var(--panel); }
 .mz-lane span { position: absolute; top: 3px; bottom: 3px; left: 38%; width: 30%; border-radius: 3px; background: var(--zoom); }
-.card.play .mz-in { animation-name: l-mz; }
-.card.play .mz-lane span { animation-name: l-mzs; }
-@keyframes l-mz { 0%, 42% { transform: scale(1); } 70%, 100% { transform: scale(1.8); } }
+.card .mz-in { animation-name: l-mz; }
+.card .mz-lane span { animation-name: l-mzs; }
+@keyframes l-mz { 0%, 34% { transform: scale(1); } 52%, 82% { transform: scale(1.8); } 96%, 100% { transform: scale(1); } }
 @keyframes l-mzs {
     0% { opacity: 0; background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
-    12%, 36% { opacity: 1; background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
-    42%, 100% { opacity: 1; background: var(--zoom); box-shadow: none; }
+    10%, 28% { opacity: 1; background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
+    34%, 86% { opacity: 1; background: var(--zoom); box-shadow: none; }
+    96%, 100% { opacity: 0; background: var(--zoom); box-shadow: none; }
 }
 
 /* 4. Instant replay: the buffer rolls, you grab the last two minutes */
@@ -463,12 +504,12 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
 .rp-bars { position: absolute; inset: 12px 0; width: 200%; opacity: 0.65; background: repeating-linear-gradient(90deg, var(--wave) 0 2px, transparent 2px 6px); -webkit-mask: linear-gradient(180deg, transparent, #000 30% 70%, transparent), repeating-linear-gradient(90deg, #000 0 3%, rgba(0, 0, 0, 0.3) 3% 4.5%); mask: repeating-linear-gradient(90deg, #000 0 3%, rgba(0, 0, 0, 0.3) 3% 4.5%); }
 .rp-win { position: absolute; right: 0; top: 0; bottom: 0; width: 58%; display: flex; align-items: flex-start; justify-content: flex-end; padding: 4px 8px; font: 500 11px var(--mono); color: var(--accent-text); background: rgba(100, 108, 255, 0.14); box-shadow: inset 0 0 0 1.5px var(--accent); border-radius: var(--r); }
 .mini-btn { justify-self: center; display: inline-flex; align-items: center; height: 30px; padding: 0 14px; border-radius: var(--r); background: var(--accent); color: #fff; font-weight: 500; font-size: 12.5px; }
-.card.play .rp-bars { animation-name: l-scroll; animation-timing-function: linear; }
-.card.play .mini-btn { animation-name: l-press; }
-.card.play .rp-win { animation-name: l-grab; }
-@keyframes l-scroll { to { transform: translateX(-30%); } }
-@keyframes l-press { 0%, 56% { transform: none; } 60% { transform: scale(0.94); } 66%, 100% { transform: none; } }
-@keyframes l-grab { 0%, 58% { background: transparent; } 66%, 100% { background: rgba(100, 108, 255, 0.14); } }
+.card .rp-bars { animation-name: l-scroll; animation-timing-function: linear; }
+.card .mini-btn { animation-name: l-press; }
+.card .rp-win { animation-name: l-grab; }
+@keyframes l-scroll { to { transform: translateX(-50%); } }
+@keyframes l-press { 0%, 46% { transform: none; } 50% { transform: scale(0.94); } 56%, 100% { transform: none; } }
+@keyframes l-grab { 0%, 48% { background: transparent; } 56%, 86% { background: rgba(100, 108, 255, 0.14); } 96%, 100% { background: transparent; } }
 
 /* 5. Background blur: the toggle flips, the room softens */
 .v-blur { grid-template-rows: 1fr auto; gap: 14px; padding: 22px 28px; place-items: stretch; }
@@ -478,12 +519,12 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
 .mini-row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--text-2); }
 .mini-row .tgl { background: var(--accent); }
 .mini-row .tgl::after { transform: translateX(12px); background: #fff; }
-.card.play .room { animation-name: l-blur; }
-.card.play .mini-row .tgl { animation-name: l-tgl; }
-.card.play .mini-row .tgl::after { animation: l-knob var(--cyc) var(--ease-in-out) both; }
-@keyframes l-blur { 0%, 40% { filter: blur(0); } 62%, 100% { filter: blur(6px); } }
-@keyframes l-tgl { 0%, 38% { background: var(--line-2); } 44%, 100% { background: var(--accent); } }
-@keyframes l-knob { 0%, 38% { transform: none; background: #c4c4c4; } 44%, 100% { transform: translateX(12px); background: #fff; } }
+.card .room { animation-name: l-blur; }
+.card .mini-row .tgl { animation-name: l-tgl; }
+.card .mini-row .tgl::after { animation: l-knob var(--cyc) var(--ease-in-out) both; }
+@keyframes l-blur { 0%, 30% { filter: blur(0); } 48%, 84% { filter: blur(6px); } 96%, 100% { filter: blur(0); } }
+@keyframes l-tgl { 0%, 26% { background: var(--line-2); } 32%, 86% { background: var(--accent); } 92%, 100% { background: var(--line-2); } }
+@keyframes l-knob { 0%, 26% { transform: none; background: #c4c4c4; } 32%, 86% { transform: translateX(12px); background: #fff; } 92%, 100% { transform: none; background: #c4c4c4; } }
 
 /* 6. Export: pick a format, watch it render */
 .v-export { grid-template-rows: auto auto; gap: 18px; align-content: center; justify-items: center; }
@@ -493,10 +534,10 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
 .mseg i { position: absolute; top: 3px; left: 3px; width: 64px; height: 28px; border-radius: var(--r-sm); background: var(--raised); box-shadow: 0 0 0 1px var(--line-2); }
 .mbar { position: relative; width: 192px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .mbar i { position: absolute; inset: 0; background: var(--accent); border-radius: 3px; transform-origin: left; }
-.card.play .mseg i { animation-name: l-seg; }
-.card.play .mbar i { animation-name: l-bar; }
-@keyframes l-seg { 0%, 18% { transform: translateX(128px); } 26%, 40% { transform: translateX(64px); } 48%, 100% { transform: none; } }
-@keyframes l-bar { 0%, 50% { transform: scaleX(0); } 92%, 100% { transform: scaleX(1); } }
+.card .mseg i { animation-name: l-seg; }
+.card .mbar i { animation-name: l-bar; }
+@keyframes l-seg { 0%, 14% { transform: translateX(128px); } 20%, 30% { transform: translateX(64px); } 36%, 88% { transform: none; } 96%, 100% { transform: translateX(128px); } }
+@keyframes l-bar { 0%, 38% { transform: scaleX(0); opacity: 1; } 76%, 86% { transform: scaleX(1); opacity: 1; } 94% { transform: scaleX(1); opacity: 0; } 100% { transform: scaleX(0); opacity: 0; } }
 
 /* ── FAQ: height animates on open and close (landing.ts) ───── */
 .qa { max-width: 760px; border-top: 1px solid var(--edge); }
@@ -537,11 +578,14 @@ h2 { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.
     .w-insp, .w-meta, .kbd-hint { display: none; }
     .w-grid { grid-template-areas: "viewer" "bottom"; grid-template-columns: 1fr; }
     .features, .faq { padding: 96px var(--gutter) 48px; }
+    .features { padding-top: 48px; padding-bottom: 16px; }
+    .faq { padding-top: 56px; }
     .sec-head { margin-bottom: 32px; }
     .cards { grid-template-columns: 1fr; gap: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     [data-enter], [data-enter] > *, .sel::before, .sel::after { animation: none !important; }
-    .demo *, .card .viz *, .card .viz::after { animation: none !important; transition: none !important; }
+    .faq .sec-head, .faq .qa, .seam-cap span, .features .sec-head, .features .card { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .demo *, .card .viz * { animation: none !important; transition: none !important; }
 }
