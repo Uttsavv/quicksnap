@@ -14,7 +14,8 @@
 <style>
   html, body.landing { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
   body.landing { position: relative; background: radial-gradient(900px 500px at 10% -20%, rgba(255, 255, 255, 0.05), transparent 70%), var(--page); }
-  *, *::before, *::after { animation-play-state: paused !important; transition: none !important; }
+  /* A still frame: every animation and transition lands on its end state. */
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 
   /* Left: copy, sized to stay legible when the card is shown at ~400px wide */
   .og-copy { position: absolute; left: 68px; top: 0; bottom: 0; width: 500px; z-index: 5; display: flex; flex-direction: column; justify-content: center; }
@@ -55,8 +56,8 @@
     },
     studio: {
       brand: "Quicksnap Studio",
-      title: 'Hit record. <span class="sel"><span>Ship it.</span></span>',
-      lede: "Screen, camera and mic in your browser. Nothing leaves your device.",
+      title: 'Record your screen. <span class="sel"><span>Skip the edit.</span></span>',
+      lede: "Zooms and captions are added for you. Nothing leaves your device.",
       chips: ['<i class="dot"></i>Record', "Zoom", "Caption"],
       phase: "rec",
     },

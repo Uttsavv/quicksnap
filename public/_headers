@@ -10,3 +10,9 @@
 
 /sw.js
   Cache-Control: no-cache
+
+/app/*
+  X-Robots-Tag: noindex
+
+/og*.jpg
+  Cache-Control: public, max-age=86400

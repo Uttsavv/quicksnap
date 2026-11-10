@@ -374,15 +374,15 @@ kbd { font: 500 10.5px var(--mono); color: var(--muted); border: 1px solid var(-
    playhead scrubs 00:00 → 00:12 (--p, set by landing.ts) and lands on the
    features' 00:12 marker; the section then rises in. */
 .seam { --p: 0; position: relative; margin: 0 var(--gutter); height: 40px; }
-.ruler {
+.seam .ruler {
     position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: flex-start;
     font: 500 11px var(--mono); color: var(--ink-3); border-bottom: 1px solid var(--edge);
     background: repeating-linear-gradient(90deg, var(--edge) 0 1px, transparent 1px calc(100% / 24)) bottom / 100% 8px no-repeat,
                 repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px calc(100% / 4)) bottom / 100% 14px no-repeat;
 }
-.ruler span { transform: translateX(-50%); padding-top: 2px; }
-.ruler span:first-child { transform: none; }
-.ruler span:last-child { transform: translateX(-100%); color: var(--warn); opacity: calc(var(--p) * var(--p)); }
+.seam .ruler span { transform: translateX(-50%); padding-top: 2px; }
+.seam .ruler span:first-child { transform: none; }
+.seam .ruler span:last-child { transform: translateX(-100%); color: var(--warn); opacity: calc(var(--p) * var(--p)); }
 .seam-ph { position: absolute; top: 4px; bottom: -6px; left: calc(var(--p) * 100%); width: 1.5px; margin-left: -0.75px; background: var(--record); }
 .seam-ph::before { content: ""; position: absolute; top: 14px; left: -5.5px; width: 12px; height: 11px; background: var(--record); clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%); }
 .seam::after { content: ""; position: absolute; left: 0; bottom: -1px; height: 1px; width: calc(var(--p) * 100%); background: linear-gradient(90deg, transparent, rgba(240, 68, 56, 0.6)); }
