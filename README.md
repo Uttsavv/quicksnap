@@ -1,5 +1,9 @@
 # Quicksnap
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**Try it:** [quicksnap-studio.pages.dev](https://quicksnap-studio.pages.dev)
+
 Record your screen, camera and mic in the browser, then polish the recording
 with zooms, backgrounds, layouts and captions, and export it as MP4, WebM or GIF.
 Nothing is uploaded: recordings stay in the browser's storage.
@@ -67,3 +71,12 @@ same file, so deploying there needs no changes.
 | | | `⇧Z` | Fit timeline |
 | | | `⌘Z`, `⇧⌘Z` | Undo, redo |
 | | | `←` `→` | Step one frame (`⇧` = 1 s) |
+
+## Contributing
+
+Issues and pull requests are welcome. [Open an issue](https://github.com/Uttsavv/quicksnap/issues/new/choose)
+for bugs or ideas, and see [CONTRIBUTING.md](CONTRIBUTING.md) before sending a PR.
+
+## License
+
+[MIT](LICENSE)

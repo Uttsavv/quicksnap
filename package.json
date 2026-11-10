@@ -2,13 +2,20 @@
     "name": "quicksnap",
     "private": true,
     "version": "0.0.0",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Uttsavv/quicksnap.git"
+    },
+    "bugs": "https://github.com/Uttsavv/quicksnap/issues",
+    "homepage": "https://quicksnap-studio.pages.dev",
     "type": "module",
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
         "preview": "vite preview",
         "typecheck": "tsc",
-        "deploy": "npm run build && wrangler pages deploy dist --project-name quicksnap",
+        "deploy": "npm run build && wrangler pages deploy dist --project-name quicksnap-studio",
         "og": "bash scripts/og/render.sh"
     },
     "devDependencies": {

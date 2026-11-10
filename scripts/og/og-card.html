@@ -3,8 +3,8 @@
   Source for the 1200x630 share cards. It pulls the live hero demo out of
   /index.html and styles it with the real landing.css, so the card always
   matches the landing page. Render both cards with: npm run og
-    ?card=home    → public/og.jpg         (the finished edit; used by /)
-    ?card=studio  → public/og-studio.jpg  (mid-recording; used by /app/)
+    ?card=home    → public/og.jpg         (used by /)
+    ?card=studio  → public/og-studio.jpg  (used by /app/)
 -->
 <html lang="en">
 <head>
@@ -27,11 +27,41 @@
   .og-chips span { height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 18px; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); font-size: 17px; font-weight: 500; color: var(--ink-2); }
   .og-chips .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--record, #ff1900); box-shadow: 0 0 0 4px rgba(255, 25, 0, 0.2); }
 
-  /* Right: the real editor window, bleeding off the right edge like the hero */
-  .og-demo { position: absolute; left: 610px; top: 0; width: 900px; height: 630px; }
-  .og-demo .demo { position: absolute; left: 0; top: 50%; margin: 0; transform: translateY(-50%); }
-  .og-demo .demo[data-enter] { animation: none; }
-  .og-demo .bokeh { inset: -30% -20% -30% -60%; -webkit-mask-image: none; mask-image: none; }
+  /* Right: two different windows, fanned. Back: the Studio mid-take (big
+     preview + record bar). Front: the editor (preview + timeline). No
+     inspector in either, and nothing clipped except the front's right bleed. */
+  .og-stack { position: absolute; left: 590px; top: 0; width: 610px; height: 630px; }
+  .og-stack .demo { position: absolute; margin: 0; transform-origin: 0 0; height: auto; }
+  .og-stack .demo[data-enter] { animation: none; }
+  .og-stack .win { border-radius: 14px; }
+  .og-stack .w-insp { display: none; }
+  .og-stack .w-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "viewer" "bottom"; }
+  .og-back .bokeh { display: none; }
+  .og-front .bokeh { inset: -90% -30% -30% -60%; -webkit-mask-image: none; mask-image: none; opacity: 0.8; }
+
+  .og-back { left: 140px; top: 18px; transform: rotate(5deg); }
+  .og-back .win { width: 720px; }
+  .og-back .w-meta, .og-back .w-new, .og-back .w-export, .og-back .scenes { display: none; }
+  .og-back .w-title::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--record, #ff1900); vertical-align: 1px; }
+  .og-back .w-bottom { height: 58px; }
+  .og-back .w-viewer { height: 300px; }
+
+  .og-front { left: 0; top: 290px; transform: rotate(-4deg); z-index: 2; }
+  .og-front .win { width: 900px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), -30px 50px 110px rgba(0, 0, 0, 0.75); }
+  .og-front .w-viewer { height: 320px; }
+  .og-front .w-bottom { height: 176px; }
+  .og-front .w-new { display: none; }
+
+  /* Quiet the recorded screen: keep the page header, chart and camera
+     bubble; drop the popup, pointer, stat tiles and burned-in caption. */
+  .og-stack .pop, .og-stack .ripple, .og-stack .p-ptr, .og-stack .cursor,
+  .og-stack .b-stats, .og-stack .canvas > .caption, .og-stack .b-share { display: none !important; }
+  .og-stack .b-chart { flex: 1; }
+  /* Fit the whole recording inside each preview pane instead of cropping it. */
+  .og-stack .stage { height: 100%; box-sizing: border-box; display: flex; justify-content: center; align-items: flex-start; }
+  .og-stack .canvas { flex: none; width: var(--cw); transform: scale(var(--fit)); transform-origin: 50% 0; }
+  .og-back { --cw: 696px; --fit: 0.7; }
+  .og-front { --cw: 876px; --fit: 0.6; }
 </style>
 </head>
 <body class="landing">
@@ -44,7 +74,7 @@
     <p class="lede" id="lede"></p>
     <p class="og-chips" id="chips"></p>
   </div>
-  <div class="og-demo" id="slot"></div>
+  <div class="og-stack" id="slot"></div>
 
 <script type="module">
   const CARDS = {
@@ -52,14 +82,12 @@
       title: 'Screen recordings that look <span class="sel"><span>edited.</span></span>',
       lede: "Record, zoom, caption and export in one browser tab.",
       chips: ["Free", "No sign-up", "No upload"],
-      phase: "edit",
     },
     studio: {
       brand: "Quicksnap Studio",
-      title: 'Record your screen. <span class="sel"><span>Skip the edit.</span></span>',
-      lede: "Zooms and captions are added for you. Nothing leaves your device.",
-      chips: ['<i class="dot"></i>Record', "Zoom", "Caption"],
-      phase: "rec",
+      title: 'Record it. <span class="sel"><span>Edit it.</span></span> Export it.',
+      lede: "Screen, camera and mic, then zooms, captions and cuts. All in your browser.",
+      chips: ['<i class="dot"></i>Record', "Edit", "Export"],
     },
   };
   const card = CARDS[new URLSearchParams(location.search).get("card")] ?? CARDS.home;
@@ -68,22 +96,34 @@
   document.getElementById("lede").textContent = card.lede;
   document.getElementById("chips").innerHTML = card.chips.map((c) => `<span>${c}</span>`).join("");
 
-  // Clone the hero demo from the landing page itself.
+  // Clone the hero demo from the landing page itself, once per window.
   const html = await (await fetch("/")).text();
-  const demo = new DOMParser().parseFromString(html, "text/html").getElementById("demo");
-  demo.dataset.phase = card.phase;
-  if (card.phase === "rec") {
-    for (const k of ["suggest", "accept", "caps", "zoom", "captions", "done"]) delete demo.dataset[k];
-    demo.querySelector(".clock").textContent = "00:00:42";
-    demo.querySelector(".rec-label").textContent = "Stop";
-  }
-  document.getElementById("slot").append(demo);
+  const src = new DOMParser().parseFromString(html, "text/html").getElementById("demo");
+  const make = (phase) => {
+    const demo = src.cloneNode(true);
+    demo.removeAttribute("id");
+    demo.dataset.phase = phase;
+    delete demo.dataset.zoom; // show the whole page, not the zoomed-in crop
+    if (phase === "rec") {
+      for (const k of ["suggest", "accept", "caps", "captions", "done"]) delete demo.dataset[k];
+      demo.querySelector(".clock").textContent = "00:00:42";
+      demo.querySelector(".rec-label").textContent = "Stop";
+      demo.querySelector(".w-title").textContent = "Studio";
+    } else {
+      delete demo.dataset.done; // show Export, not the post-export "Saved" state
+    }
+    return demo;
+  };
+  // Same stack on both cards: the take at the back, the finished edit in front.
+  const [back, front] = [make("rec"), make("edit")];
+  back.classList.add("og-back");
+  front.classList.add("og-front");
+  document.getElementById("slot").append(back, front);
 
-  // Fit the 1080px-wide window to the card's height, leaving a margin.
-  const win = demo.querySelector(".win");
-  const k = Math.min(0.78, 540 / win.offsetHeight);
-  demo.style.setProperty("--k", String(k));
-  demo.style.setProperty("--h", `${Math.round(win.offsetHeight * k)}px`);
+  for (const [demo, k] of [[back, 0.56], [front, 0.56]]) {
+    demo.style.setProperty("--k", String(k));
+    demo.style.setProperty("--h", `${Math.round(demo.querySelector(".win").offsetHeight * k)}px`);
+  }
   await document.fonts.ready;
   document.documentElement.dataset.ready = "";
 </script>

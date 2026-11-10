@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in Quicksnap doesn't work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting! Most Quicksnap bugs depend on the browser, so the details below really help.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the studio
+        2. Share a window with mic on
+        3. ...
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in the app?
+      options: [Recording, Editor, Captions, Export, Landing page, Other]
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 131, Safari 18.2, ...
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: macOS 15, Windows 11, ChromeOS, ...
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: What were you recording?
+      options: [Whole screen, A window, A browser tab, Camera only, Not relevant]
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors or screenshots
+      description: Open DevTools (F12) → Console and paste any red errors. Screenshots or a short clip are welcome too.
