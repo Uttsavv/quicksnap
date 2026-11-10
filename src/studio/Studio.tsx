@@ -5,27 +5,10 @@ import { renderFrame } from "../render/compositor";
 import { formatBytes, storageEstimate } from "../storage/files";
 import { Check, Meter, Segmented, Slider } from "../ui/controls";
 import { Icon } from "../ui/icons";
+import { SCENES, SceneArt } from "../ui/scenes";
 import { closePip, openPip, pipOpen, pipSupported } from "./Pip";
 import { replaySupported } from "./replay";
 import * as S from "./state";
-
-export const SCENES: { mode: LayoutMode; name: string; key: string }[] = [
-    { mode: "screen", name: "Screen only", key: "1" },
-    { mode: "bubble", name: "Screen + bubble", key: "2" },
-    { mode: "side", name: "Side by side", key: "3" },
-    { mode: "camera", name: "Camera only", key: "4" },
-];
-
-function SceneArt({ mode }: { mode: LayoutMode }) {
-    return (
-        <div class="scene-art" aria-hidden="true">
-            {mode !== "camera" && <i class="s" style={mode === "side" ? { left: "6%", top: "14%", width: "58%", bottom: "14%" } : { inset: "12%" }} />}
-            {mode === "bubble" && <i class="c" style={{ right: "6%", bottom: "8%", width: "22%", aspectRatio: "1", borderRadius: "50%" }} />}
-            {mode === "side" && <i class="c" style={{ right: "6%", top: "14%", width: "26%", bottom: "14%", borderRadius: "2px" }} />}
-            {mode === "camera" && <i class="c" style={{ inset: "12% 28%", borderRadius: "3px" }} />}
-        </div>
-    );
-}
 
 // Shown in the preview until a screen is shared, so scenes are visible right away.
 let placeholder: HTMLCanvasElement | null = null;

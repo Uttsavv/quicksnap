@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "preact/hooks";
-import { formatTimecode, moveBoundary, setClip, sourceToOutput, splitAt } from "../lib/timeline";
+import { moveSceneEdge } from "../lib/scenes";
+import { formatTime, formatTimecode, moveBoundary, setClip, sourceToOutput, splitAt } from "../lib/timeline";
 import type { Clip, Timeline as TL } from "../lib/types";
 import { Segmented } from "../ui/controls";
 import { Icon } from "../ui/icons";
+import { sceneName } from "../ui/scenes";
 import * as A from "./actions";
 import { LEVEL_STEP } from "./analysis";
 import type { Player } from "./player";
@@ -11,8 +13,8 @@ import { autoFit, begin, end, fitRequest, liveTimeline, playhead, project, pxPer
 const LABEL_W = 112; // sticky track-header column
 const PAD = 0;
 
-type SegKey = "zooms" | "layouts" | "captions";
-type SegKind = "zoom" | "layout" | "caption";
+type SegKey = "zooms" | "captions";
+type SegKind = "zoom" | "caption";
 
 function useDrag() {
     return (e: PointerEvent, onMove: (dt: number) => void, onUp?: (moved: boolean) => void) => {
@@ -225,6 +227,53 @@ function SegLane(props: { k: SegKey; kind: SegKind; cls: string; label: (s: TL[S
     );
 }
 
+/** One continuous strip: every moment has exactly one scene. Drag an edge to move a switch. */
+function SceneLane() {
+    const p = project.value!;
+    const pps = pxPerSecond.value;
+    const drag = useDrag();
+    const runs = p.timeline.layouts;
+    const sel = selection.value;
+
+    const dragEdge = (e: PointerEvent, i: number) => {
+        e.stopPropagation();
+        begin();
+        const start = project.value!.timeline.layouts;
+        const base = start[i].end;
+        const snap = snapper(project.value!.timeline, "");
+        drag(
+            e,
+            (dt) => liveTimeline(() => ({ layouts: moveSceneEdge(start, i, snap(base + dt)) })),
+            () => end(),
+        );
+    };
+
+    return (
+        <div class="tl-lane" style={{ width: `${p.duration * pps}px` }}>
+            {runs.map((r, i) => {
+                const isSel = sel?.kind === "layout" && sel.id === r.id;
+                return (
+                    <button
+                        key={r.id}
+                        type="button"
+                        class={`tl-item layout scene-${r.mode}${isSel ? " selected" : ""}`}
+                        style={{ left: `${r.start * pps}px`, width: `${Math.max(2, (r.end - r.start) * pps - 1)}px` }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            selection.value = { kind: "layout", id: r.id };
+                        }}
+                        title={`${sceneName(r.mode)}, ${formatTime(r.start)}–${formatTime(r.end)}`}
+                        aria-label={`${sceneName(r.mode)} from ${formatTime(r.start)} to ${formatTime(r.end)}`}
+                    >
+                        {sceneName(r.mode)}
+                        {i < runs.length - 1 && <span class="tl-handle r" title="Drag to move this scene switch" onPointerDown={(e) => dragEdge(e, i)} />}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
 export function Timeline({ player }: { player: Player }) {
     const p = project.value!;
     const pps = pxPerSecond.value;
@@ -304,11 +353,6 @@ export function Timeline({ player }: { player: Player }) {
                     <button class="btn" type="button" onClick={() => A.addZoom()} title="Add zoom (Z)">
                         <Icon name="zoom" /> Zoom <kbd>Z</kbd>
                     </button>
-                    {hasCamera && (
-                        <button class="btn" type="button" onClick={() => A.addLayout()} title="Add layout change (C)">
-                            <Icon name="camera" /> Layout <kbd>C</kbd>
-                        </button>
-                    )}
                     <button class="btn" type="button" onClick={() => A.addMarker()} title="Add marker (M)">
                         <Icon name="flag" /> Marker <kbd>M</kbd>
                     </button>
@@ -406,14 +450,8 @@ export function Timeline({ player }: { player: Player }) {
                     </div>
                     {hasCamera && (
                         <div class="tl-row">
-                            <div class="tl-head"><Icon name="camera" size={14} />Layout</div>
-                            <SegLane
-                                k="layouts"
-                                kind="layout"
-                                cls="layout"
-                                label={(l) => ({ screen: "Screen only", bubble: "Screen + bubble", side: "Side by side", camera: "Camera only" })[(l as { mode: string }).mode as "screen"]}
-                                onEmptyDouble={(t) => A.addLayout(t)}
-                            />
+                            <div class="tl-head" title="Press 1–4 to switch scene from the playhead"><Icon name="camera" size={14} />Scene</div>
+                            <SceneLane />
                         </div>
                     )}
                     {p.timeline.captions.length > 0 && (

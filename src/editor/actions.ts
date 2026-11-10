@@ -2,11 +2,13 @@
 
 import { signal } from "@preact/signals";
 import { clipAt, cutRanges, setClip, splitAt } from "../lib/timeline";
-import { uid, type LayoutMode, type ZoomSegment } from "../lib/types";
+import { recordedScenes, removeScene, startScene, setSceneMode, switchSceneAt, wholeVideo } from "../lib/scenes";
+import { uid, type LayoutMode, type LayoutSegment, type ZoomSegment } from "../lib/types";
+import { sceneName } from "../ui/scenes";
 import { errorText, toast } from "../ui/controls";
 import { analyzeAudio, findSilences, suggestZooms, type AudioLevels } from "./analysis";
 import { transcribe } from "./captions";
-import { playhead, project, selection, setTimeline } from "./store";
+import { commit, playhead, project, selection, setTimeline } from "./store";
 
 export const levels = signal<AudioLevels | null>(null);
 export const task = signal<{ label: string; progress: number; cancel: () => void } | null>(null);
@@ -41,7 +43,13 @@ export function deleteSelection() {
         setTimeline((tl) => ({ clips: setClip(tl.clips, sel.id, { enabled: !c.enabled }) }));
         return;
     }
-    const key = ({ zoom: "zooms", layout: "layouts", caption: "captions", marker: "markers" } as const)[sel.kind];
+    if (sel.kind === "layout") {
+        const layouts = project.value?.timeline.layouts ?? [];
+        if (layouts.length > 1) commitScenes(removeScene(layouts, sel.id));
+        selection.value = null;
+        return;
+    }
+    const key = ({ zoom: "zooms", caption: "captions", marker: "markers" } as const)[sel.kind];
     setTimeline((tl) => ({ [key]: (tl[key] as { id: string }[]).filter((x) => x.id !== sel.id) }));
     selection.value = null;
 }
@@ -66,14 +74,45 @@ export function addZoom(at = playhead.value) {
     selection.value = { kind: "zoom", id: z.id };
 }
 
-export function addLayout(at = playhead.value) {
+/** Scene edits replace the strip; the fallback (only used past the end) follows the last scene. */
+function commitScenes(runs: LayoutSegment[]) {
+    commit((p) => ({ timeline: { ...p.timeline, layouts: runs }, style: { ...p.style, defaultLayout: runs[runs.length - 1].mode } }));
+}
+
+/** Switch scene from the playhead until the next change, like switching while recording. */
+export function switchScene(mode: LayoutMode, at = playhead.value) {
+    const p = project.value;
+    if (!p?.timeline.layouts.length) return;
+    const r = switchSceneAt(p.timeline.layouts, at, mode);
+    if (r.runs !== p.timeline.layouts) commitScenes(r.runs);
+    selection.value = { kind: "layout", id: r.id };
+}
+
+/** Change one whole scene section. */
+export function setScene(id: string, mode: LayoutMode) {
     const p = project.value;
     if (!p) return;
-    const start = Math.min(at, Math.max(0, p.duration - 1));
-    const id = uid();
-    const mode: LayoutMode = p.style.defaultLayout === "side" ? "bubble" : "side";
-    setTimeline((tl) => ({ layouts: [...tl.layouts, { id, start, end: Math.min(p.duration, start + 5), mode }].sort((a, b) => a.start - b.start) }));
-    selection.value = { kind: "layout", id };
+    const r = setSceneMode(p.timeline.layouts, id, mode);
+    if (r.runs !== p.timeline.layouts) commitScenes(r.runs);
+    selection.value = { kind: "layout", id: r.id };
+}
+
+export function applySceneEverywhere(mode: LayoutMode) {
+    const p = project.value;
+    if (!p) return;
+    const runs = wholeVideo(mode, p.duration);
+    commitScenes(runs);
+    selection.value = null;
+    toast(`Whole video set to ${sceneName(mode)}. Undo with ⌘Z.`);
+}
+
+export function resetScenes() {
+    const p = project.value;
+    if (!p) return;
+    const has = (k: string) => p.sources.some((x) => x.kind === k);
+    commitScenes(recordedScenes(p.events, startScene(has("camera"), has("screen")), p.duration));
+    selection.value = null;
+    toast("Scenes reset to how you recorded them. Undo with ⌘Z.");
 }
 
 export function addMarker(at = playhead.value) {

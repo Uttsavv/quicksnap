@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { href } from "../app/router";
 import { ExportDialog } from "../export/ExportDialog";
+import { withSceneStrip } from "../lib/scenes";
 import { clipAt, formatTimecode, outputDuration, skipCut, sourceToOutput } from "../lib/timeline";
 import { canvasToScreen, layoutAt, outputSize, zoomAt } from "../render/compositor";
 import { projects } from "../storage/db";
@@ -8,6 +9,7 @@ import { errorText, Segmented, toast } from "../ui/controls";
 import { Icon } from "../ui/icons";
 import { LogoMark } from "../ui/Logo";
 import { Loader } from "../ui/motion";
+import { SCENES } from "../ui/scenes";
 import * as A from "./actions";
 import { Inspector, tab } from "./Inspector";
 import { Player, previewZooms } from "./player";
@@ -17,7 +19,7 @@ import { Timeline } from "./Timeline";
 const PREVIEW_SHORT = 720;
 const TL_KEY = "qs.tlHeight.v2"; // v2: the old, shorter default is not reused
 
-/** Toolbar 40 + ruler 27 + Clips 45 + Zoom 35 + Layout 35 + Captions 35 + Audio 45 + padding. */
+/** Toolbar 40 + ruler 27 + Clips 45 + Zoom 35 + Scene 35 + Captions 35 + Audio 45 + padding. */
 const TIMELINE_CONTENT = 40 + 27 + 45 + 35 + 35 + 35 + 45 + 12;
 
 function defaultTimelineHeight() {
@@ -79,8 +81,9 @@ export function Editor({ id }: { id: string }) {
     useEffect(() => {
         let disposed = false;
         (async () => {
-            const p = await projects.get(id);
-            if (!p) throw new Error("This recording doesn't exist in this browser.");
+            const saved = await projects.get(id);
+            if (!saved) throw new Error("This recording doesn't exist in this browser.");
+            const p = withSceneStrip(saved);
             St.load(p);
             const player = new Player(
                 () => St.project.value,
@@ -241,12 +244,12 @@ export function Editor({ id }: { id: string }) {
                 case "J":
                     seekTo(St.playhead.value - 5);
                     break;
-                case "c":
-                case "C":
-                    if (St.project.value.sources.some((s) => s.kind === "camera")) {
-                        A.addLayout();
-                        tab.value = "camera";
-                    }
+                case "1":
+                case "2":
+                case "3":
+                case "4":
+                    // Same keys as the studio: switch scene from the playhead on.
+                    if (St.project.value.sources.some((s) => s.kind === "camera")) A.switchScene(SCENES[Number(e.key) - 1].mode);
                     break;
                 case "m":
                 case "M":
@@ -280,7 +283,7 @@ export function Editor({ id }: { id: string }) {
     const sel = St.selection.value;
     useEffect(() => {
         if (sel?.kind === "zoom") tab.value = "zoom";
-        else if (sel?.kind === "layout") tab.value = "camera";
+        else if (sel?.kind === "layout") tab.value = "style";
         else if (sel?.kind === "caption") tab.value = "captions";
     }, [sel?.kind, sel?.id]);
 

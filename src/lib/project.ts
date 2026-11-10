@@ -1,8 +1,9 @@
 import { ALL_FORMATS, BlobSource, Input, VideoSampleSink } from "mediabunny";
 import { projects } from "../storage/db";
 import { deleteDir, readFile, writeFile } from "../storage/files";
+import { recordedScenes, startScene } from "./scenes";
 import { emptyTimeline } from "./timeline";
-import { startingStyle, uid, type LayoutMode, type LayoutSegment, type Project, type RecordingEvent, type SourceFile } from "./types";
+import { startingStyle, uid, type Project, type RecordingEvent, type SourceFile } from "./types";
 
 export function buildProject(opts: {
     id: string;
@@ -16,16 +17,9 @@ export function buildProject(opts: {
     const hasCamera = sources.some((s) => s.kind === "camera");
     const hasScreen = sources.some((s) => s.kind === "screen");
 
-    // Scene switches during recording become editable layout segments.
-    const scenes = events.filter((e) => e.type === "scene");
-    const initial = (scenes[0]?.value as LayoutMode) ?? (hasCamera ? (hasScreen ? "bubble" : "camera") : "screen");
-    const layouts: LayoutSegment[] = [];
-    for (let i = 1; i < scenes.length; i++) {
-        const start = scenes[i].t;
-        const end = scenes[i + 1]?.t ?? duration;
-        if (end - start > 0.05 && scenes[i].value !== initial)
-            layouts.push({ id: uid(), start, end, mode: scenes[i].value as LayoutMode });
-    }
+    // Scene switches during recording become the editor's scene strip.
+    const fallback = startScene(hasCamera, hasScreen);
+    const layouts = hasCamera ? recordedScenes(events, fallback, duration) : [];
 
     const timeline = emptyTimeline(duration);
     timeline.layouts = layouts;
@@ -43,7 +37,8 @@ export function buildProject(opts: {
         sources,
         events,
         timeline,
-        style: startingStyle(initial),
+        // The fallback only matters past the end, so it matches the last scene.
+        style: startingStyle(layouts[layouts.length - 1]?.mode ?? fallback),
     };
 }
 

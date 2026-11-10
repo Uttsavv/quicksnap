@@ -96,7 +96,8 @@ export function stateAt(
     const edges: number[] = [];
     for (const l of layouts) edges.push(l.start, l.end);
     for (const e of edges) {
-        if (t >= e && t - e < LAYOUT_TRANSITION) {
+        // Nothing comes before 0, so the opening scene never blends in.
+        if (e > 0 && t >= e && t - e < LAYOUT_TRANSITION) {
             const before = layoutAt(layouts, style.defaultLayout, e - 1e-3);
             if (before !== to) {
                 from = before;

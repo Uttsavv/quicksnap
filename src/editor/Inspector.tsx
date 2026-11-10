@@ -1,19 +1,19 @@
 import { signal } from "@preact/signals";
 import { useState } from "preact/hooks";
 import { formatTime, setClip } from "../lib/timeline";
-import { resetLook, saveLook, uid, type Corner, type Easing, type LayoutMode } from "../lib/types";
+import { recordedScenes, sameScenes, sceneIndexAt, startScene } from "../lib/scenes";
+import { resetLook, saveLook, uid, type Corner, type Easing } from "../lib/types";
 import { BACKGROUND_PRESETS, presetCss, SOLID_COLORS } from "../render/backgrounds";
 import { writeFile } from "../storage/files";
 import { Check, Segmented, Slider, errorText, toast } from "../ui/controls";
 import { Icon, type IconName } from "../ui/icons";
+import { SCENES, SceneArt, sceneName } from "../ui/scenes";
 import * as A from "./actions";
 import type { Player } from "./player";
 import { begin, end, liveStyle, liveTimeline, playhead, project, selection, setStyle, setTimeline } from "./store";
 
-export type Tab = "style" | "zoom" | "camera" | "audio" | "captions";
+export type Tab = "style" | "zoom" | "audio" | "captions";
 export const tab = signal<Tab>("style");
-
-const LAYOUT_NAMES: Record<LayoutMode, string> = { screen: "Screen", bubble: "Bubble", side: "Side", camera: "Camera" };
 
 /** Slider that records one undo step per drag. */
 function StyleSlider(props: { label: string; value: number; min: number; max: number; step?: number; display: string; set: (v: number) => void }) {
@@ -40,8 +40,15 @@ function StyleTab({ player }: { player: Player }) {
             toast(errorText(err), "error");
         }
     };
+    const hasCamera = p.sources.some((x) => x.kind === "camera");
     return (
         <>
+            {hasCamera && (
+                <>
+                    <SceneGroup />
+                    <CameraGroup />
+                </>
+            )}
             <div class="group">
                 <h3 class="group-title">Background</h3>
                 <div class="swatches">
@@ -236,82 +243,108 @@ function ZoomTab({ player }: { player: Player }) {
     );
 }
 
-function CameraTab() {
+function SceneGroup() {
     const p = project.value!;
-    const cam = p.style.camera;
+    const runs = p.timeline.layouts;
     const sel = selection.value;
-    const seg = sel?.kind === "layout" ? p.timeline.layouts.find((x) => x.id === sel.id) : undefined;
-    const setCam = (patch: Partial<typeof cam>) => setStyle((s) => ({ camera: { ...s.camera, ...patch } }));
-    const [blurBusy, setBlurBusy] = useState(false);
-    if (!p.sources.some((s) => s.kind === "camera")) return <p class="small muted">This recording has no camera.</p>;
-    const layouts = (Object.keys(LAYOUT_NAMES) as LayoutMode[]).map((m) => ({ value: m, label: LAYOUT_NAMES[m] }));
+    const run = (sel?.kind === "layout" ? runs.find((r) => r.id === sel.id) : undefined) ?? runs[sceneIndexAt(runs, playhead.value)];
+    if (!run) return null;
+    const many = runs.length > 1;
+    const has = (k: string) => p.sources.some((x) => x.kind === k);
+    const edited = !sameScenes(runs, recordedScenes(p.events, startScene(has("camera"), has("screen")), p.duration));
+    const range = `${formatTime(run.start)} – ${formatTime(run.end)}`;
     return (
-        <>
-            {seg && (
-                <div class="callout">
-                    <div class="spread">
-                        <h3 class="group-title">
-                            Selected layout
-                        </h3>
-                        <span class="mono small muted">
-                            {formatTime(seg.start)} – {formatTime(seg.end)}
-                        </span>
-                    </div>
-                    <Segmented<LayoutMode>
-                        full
-                        label="Layout for this section"
-                        value={seg.mode}
-                        options={layouts}
-                        onChange={(m) => setTimeline((tl) => ({ layouts: tl.layouts.map((l) => (l.id === seg.id ? { ...l, mode: m } : l)) }))}
-                    />
+        <div class="group">
+            <div class="spread">
+                <h3 class="group-title">Scene</h3>
+                {many && <span class="mono small muted">{range}</span>}
+            </div>
+            <div class="scenes picker" role="group" aria-label={many ? `Scene from ${range}` : "Scene for the whole video"}>
+                {SCENES.map((s) => (
+                    <button type="button" class="scene" aria-pressed={run.mode === s.mode} onClick={() => A.setScene(run.id, s.mode)}>
+                        <SceneArt mode={s.mode} />
+                        <span class="small truncate">{s.name}</span>
+                    </button>
+                ))}
+            </div>
+            <span class="small muted">
+                {many ? `Changes ${range} only.` : "Applies to the whole video."} Press <kbd>1</kbd>–<kbd>4</kbd> to switch scene from the playhead on, like while recording.
+            </span>
+            {(many || edited) && (
+                <div class="row-wrap">
+                    {many && (
+                        <button class="btn" type="button" onClick={() => A.applySceneEverywhere(run.mode)}>
+                            Use {sceneName(run.mode)} everywhere
+                        </button>
+                    )}
+                    {edited && (
+                        <button class="btn ghost" type="button" onClick={A.resetScenes}>
+                            Reset to recorded scenes
+                        </button>
+                    )}
                 </div>
             )}
-            <div class="field">
-                <span class="field-head">Default layout</span>
-                <Segmented<LayoutMode> full label="Default layout" value={p.style.defaultLayout} options={layouts} onChange={(m) => setStyle(() => ({ defaultLayout: m }))} />
-            </div>
-            <div class="field">
-                <span class="field-head">Bubble shape</span>
-                <Segmented
-                    full
-                    label="Bubble shape"
-                    value={cam.shape}
-                    options={[
-                        { value: "circle", label: "Circle" },
-                        { value: "rounded", label: "Rounded" },
-                    ]}
-                    onChange={(v) => setCam({ shape: v })}
-                />
-            </div>
-            <StyleSlider
-                label="Bubble size"
-                min={0.12}
-                max={0.45}
-                step={0.01}
-                value={cam.size}
-                display={`${Math.round(cam.size * 100)}%`}
-                set={(v) => liveStyle((s) => ({ camera: { ...s.camera, size: v } }))}
-            />
-            <div class="field">
-                <span class="field-head">Bubble position</span>
-                <div class="corner-grid" role="group" aria-label="Bubble position">
-                    {(["tl", "tr", "bl", "br"] as Corner[]).map((c) => (
-                        <button type="button" aria-pressed={cam.corner === c} aria-label={{ tl: "Top left", tr: "Top right", bl: "Bottom left", br: "Bottom right" }[c]} onClick={() => setCam({ corner: c })}>
-                            <span
-                                style={{
-                                    position: "absolute",
-                                    width: "8px",
-                                    height: "8px",
-                                    borderRadius: "50%",
-                                    background: "currentColor",
-                                    [c[0] === "t" ? "top" : "bottom"]: "5px",
-                                    [c[1] === "l" ? "left" : "right"]: "6px",
-                                }}
-                            />
-                        </button>
-                    ))}
-                </div>
-            </div>
+        </div>
+    );
+}
+
+function CameraGroup() {
+    const p = project.value!;
+    const cam = p.style.camera;
+    const setCam = (patch: Partial<typeof cam>) => setStyle((s) => ({ camera: { ...s.camera, ...patch } }));
+    const [blurBusy, setBlurBusy] = useState(false);
+    const bubble = p.timeline.layouts.some((r) => r.mode === "bubble");
+    return (
+        <div class="group">
+            <h3 class="group-title">Camera</h3>
+            {bubble ? (
+                <>
+                    <div class="field">
+                        <span class="field-head">Bubble shape</span>
+                        <Segmented
+                            full
+                            label="Bubble shape"
+                            value={cam.shape}
+                            options={[
+                                { value: "circle", label: "Circle" },
+                                { value: "rounded", label: "Rounded" },
+                            ]}
+                            onChange={(v) => setCam({ shape: v })}
+                        />
+                    </div>
+                    <StyleSlider
+                        label="Bubble size"
+                        min={0.12}
+                        max={0.45}
+                        step={0.01}
+                        value={cam.size}
+                        display={`${Math.round(cam.size * 100)}%`}
+                        set={(v) => liveStyle((s) => ({ camera: { ...s.camera, size: v } }))}
+                    />
+                    <div class="field">
+                        <span class="field-head">Bubble position</span>
+                        <div class="corner-grid" role="group" aria-label="Bubble position">
+                            {(["tl", "tr", "bl", "br"] as Corner[]).map((c) => (
+                                <button type="button" aria-pressed={cam.corner === c} aria-label={{ tl: "Top left", tr: "Top right", bl: "Bottom left", br: "Bottom right" }[c]} onClick={() => setCam({ corner: c })}>
+                                    <span
+                                        style={{
+                                            position: "absolute",
+                                            width: "8px",
+                                            height: "8px",
+                                            borderRadius: "50%",
+                                            background: "currentColor",
+                                            [c[0] === "t" ? "top" : "bottom"]: "5px",
+                                            [c[1] === "l" ? "left" : "right"]: "6px",
+                                        }}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <span class="small muted">Bubble options appear when a scene uses Screen + bubble.</span>
+            )}
             <Check label="Mirror camera" checked={cam.mirror} onChange={(v) => setCam({ mirror: v })} />
             <Check
                 label={blurBusy ? "Blur background (loading model…)" : "Blur background"}
@@ -330,7 +363,7 @@ function CameraTab() {
                     }
                 }}
             />
-        </>
+        </div>
     );
 }
 
@@ -469,7 +502,6 @@ export function Inspector({ player }: { player: Player }) {
     const tabs: [Tab, string, IconName][] = [
         ["style", "Style", "style"],
         ["zoom", "Zoom", "zoom"],
-        ["camera", "Camera", "camera"],
         ["audio", "Audio", "wave"],
         ["captions", "Captions", "captions"],
     ];
@@ -486,7 +518,6 @@ export function Inspector({ player }: { player: Player }) {
             <div class="panel-body tab-panel" key={tab.value} role="tabpanel" id="inspector-panel" aria-labelledby={`tab-${tab.value}`}>
                 {tab.value === "style" && <StyleTab player={player} />}
                 {tab.value === "zoom" && <ZoomTab player={player} />}
-                {tab.value === "camera" && <CameraTab />}
                 {tab.value === "audio" && <AudioTab />}
                 {tab.value === "captions" && <CaptionsTab player={player} />}
             </div>
