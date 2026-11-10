@@ -169,6 +169,11 @@ safely("demo", () => {
         const k = compact.matches ? w / 720 : Math.min(1, w / 880, (innerHeight - 140) / h);
         demo.style.setProperty("--k", String(k));
         demo.style.setProperty("--h", `${Math.round(h * k)}px`);
+        // The part of the window past the screen edge, in window pixels. The top bar's
+        // actions (Export, New recording) are pulled in by this much so the cursor never
+        // has to leave the screen to reach them.
+        const visible = (document.documentElement.clientWidth - demo.getBoundingClientRect().left) / k;
+        demo.style.setProperty("--bleed", `${Math.max(0, Math.ceil(win.offsetWidth - visible + 16))}px`);
     };
     addEventListener("resize", fit);
     new ResizeObserver(fit).observe(demo);

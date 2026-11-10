@@ -162,7 +162,8 @@ h1 { margin-top: 28px; font-size: clamp(44px, 5.2vw, 76px); line-height: 1.02; l
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 50px 120px rgba(0, 0, 0, 0.6);
     transform: scale(var(--k)); transform-origin: 0 0; user-select: none; pointer-events: none;
 }
-.w-top { flex: none; height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 8px; border-radius: var(--r-lg); }
+/* --bleed (landing.ts) keeps the actions on screen when the window runs off the right edge. */
+.w-top { flex: none; height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 calc(8px + var(--bleed, 0px)) 0 8px; border-radius: var(--r-lg); }
 .w-top > .ic { color: var(--muted); }
 .w-title { font-weight: 600; font-size: 13px; }
 .w-meta { font: 11.5px var(--mono); color: var(--muted); }
