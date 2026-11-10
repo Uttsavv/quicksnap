@@ -2,7 +2,7 @@ import { ALL_FORMATS, BlobSource, Input, VideoSampleSink } from "mediabunny";
 import { projects } from "../storage/db";
 import { deleteDir, readFile, writeFile } from "../storage/files";
 import { emptyTimeline } from "./timeline";
-import { defaultStyle, uid, type LayoutMode, type LayoutSegment, type Project, type RecordingEvent, type SourceFile } from "./types";
+import { startingStyle, uid, type LayoutMode, type LayoutSegment, type Project, type RecordingEvent, type SourceFile } from "./types";
 
 export function buildProject(opts: {
     id: string;
@@ -43,7 +43,7 @@ export function buildProject(opts: {
         sources,
         events,
         timeline,
-        style: defaultStyle(initial),
+        style: startingStyle(initial),
     };
 }
 

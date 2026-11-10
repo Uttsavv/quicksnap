@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { formatClock } from "../lib/timeline";
-import { defaultStyle, type LayoutMode } from "../lib/types";
+import { startingStyle, type LayoutMode } from "../lib/types";
 import { renderFrame } from "../render/compositor";
 import { formatBytes, storageEstimate } from "../storage/files";
 import { Check, Meter, Segmented, Slider } from "../ui/controls";
@@ -134,7 +134,7 @@ function Monitor() {
                 c.getContext("2d")!,
                 c.width,
                 c.height,
-                defaultStyle(S.scene.value),
+                startingStyle(S.scene.value),
                 { screen: scr, screenSize: scrSize, camera: hasC ? cv : null, cameraSize: hasC ? [cv.videoWidth, cv.videoHeight] : undefined },
                 { layoutFrom: S.scene.value, layoutTo: S.scene.value, layoutP: 1, zoom: { scale: 1, focus: [0.5, 0.5] } },
             );

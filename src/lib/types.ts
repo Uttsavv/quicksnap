@@ -135,6 +135,40 @@ export function defaultStyle(layout: LayoutMode = "bubble"): Style {
     };
 }
 
+const LOOK_KEY = "qs.look";
+type Look = Pick<Style, "background" | "padding" | "radius" | "shadow" | "motionBlur" | "camera">;
+
+/** The look new recordings start with: the user's saved look, else Quicksnap's. */
+export function startingStyle(layout: LayoutMode = "bubble"): Style {
+    const base = defaultStyle(layout);
+    try {
+        const saved = JSON.parse(localStorage.getItem(LOOK_KEY) ?? "null") as Partial<Look> | null;
+        if (saved) return { ...base, ...saved, camera: { ...base.camera, ...saved.camera } };
+    } catch {
+        /* storage unavailable or corrupt: use the default */
+    }
+    return base;
+}
+
+export function saveLook(style: Style) {
+    // Uploaded images belong to one project, so they can't carry over.
+    const background = style.background.kind === "image" ? defaultStyle().background : style.background;
+    const look: Look = { background, padding: style.padding, radius: style.radius, shadow: style.shadow, motionBlur: style.motionBlur, camera: style.camera };
+    try {
+        localStorage.setItem(LOOK_KEY, JSON.stringify(look));
+    } catch {
+        /* storage unavailable */
+    }
+}
+
+export function resetLook() {
+    try {
+        localStorage.removeItem(LOOK_KEY);
+    } catch {
+        /* storage unavailable */
+    }
+}
+
 export function uid(): string {
     return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }

@@ -1,7 +1,7 @@
 import { signal } from "@preact/signals";
 import { useState } from "preact/hooks";
 import { formatTime, setClip } from "../lib/timeline";
-import { uid, type Corner, type Easing, type LayoutMode } from "../lib/types";
+import { resetLook, saveLook, uid, type Corner, type Easing, type LayoutMode } from "../lib/types";
 import { BACKGROUND_PRESETS, presetCss, SOLID_COLORS } from "../render/backgrounds";
 import { writeFile } from "../storage/files";
 import { Check, Segmented, Slider, errorText, toast } from "../ui/controls";
@@ -90,7 +90,18 @@ function StyleTab({ player }: { player: Player }) {
                 )}
             </div>
             <div class="group">
-                <h3 class="group-title">Frame</h3>
+                <div class="spread">
+                    <h3 class="group-title">Frame</h3>
+                    <button
+                        class="btn ghost"
+                        type="button"
+                        aria-pressed={s.padding === 0 && s.radius === 0 && s.shadow === 0}
+                        title="Show the recording edge to edge, with no background, corners or shadow"
+                        onClick={() => setStyle(() => ({ padding: 0, radius: 0, shadow: 0 }))}
+                    >
+                        No frame
+                    </button>
+                </div>
                 <StyleSlider label="Padding" min={0} max={0.2} step={0.005} value={s.padding} display={`${Math.round(s.padding * 100)}%`} set={(v) => liveStyle(() => ({ padding: v }))} />
                 <StyleSlider label="Corner radius" min={0} max={48} value={s.radius} display={`${s.radius} px`} set={(v) => liveStyle(() => ({ radius: v }))} />
                 <StyleSlider label="Shadow" min={0} max={1} step={0.05} value={s.shadow} display={`${Math.round(s.shadow * 100)}%`} set={(v) => liveStyle(() => ({ shadow: v }))} />
@@ -104,6 +115,32 @@ function StyleTab({ player }: { player: Player }) {
                     options={(["16:9", "9:16", "1:1", "4:5"] as const).map((a) => ({ value: a, label: a }))}
                     onChange={(a) => setStyle(() => ({ aspect: a }))}
                 />
+            </div>
+            <div class="group">
+                <h3 class="group-title">New recordings</h3>
+                <span class="small muted">New recordings start with Quicksnap's default look unless you save your own.</span>
+                <div class="row-wrap">
+                    <button
+                        class="btn"
+                        type="button"
+                        onClick={() => {
+                            saveLook(s);
+                            toast("New recordings will start with this look.");
+                        }}
+                    >
+                        Use this look for new recordings
+                    </button>
+                    <button
+                        class="btn ghost"
+                        type="button"
+                        onClick={() => {
+                            resetLook();
+                            toast("New recordings will use Quicksnap's default look.");
+                        }}
+                    >
+                        Reset
+                    </button>
+                </div>
             </div>
         </>
     );
