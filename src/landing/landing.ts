@@ -9,6 +9,10 @@ import "./landing.css";
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** The page zoom on big screens (landing.css). Bounding rects and the window size are in
+    screen pixels; layout sizes and the CSS we set are in zoomed pixels. */
+const zoom = () => parseFloat(getComputedStyle(document.body).zoom) || 1;
+
 function safely(name: string, fn: () => void) {
     try {
         fn();
@@ -56,7 +60,7 @@ safely("faq", () => {
 
         summary.addEventListener("click", (e) => {
             e.preventDefault();
-            const start = details.getBoundingClientRect().height;
+            const start = details.getBoundingClientRect().height / zoom();
             anim?.cancel();
             const closing = details.open && !details.classList.contains("closing");
 
@@ -166,13 +170,14 @@ safely("demo", () => {
         const h = win.offsetHeight; // unscaled
         // Desktop: about 880px of the window across the column (the inspector bleeds off), and never taller
         // than the screen allows, so the whole editor shows beside the copy.
-        const k = compact.matches ? w / 720 : Math.min(1, w / 880, (innerHeight - 140) / h);
+        const z = zoom();
+        const k = compact.matches ? w / 720 : Math.min(1, w / 880, (innerHeight / z - 140) / h);
         demo.style.setProperty("--k", String(k));
         demo.style.setProperty("--h", `${Math.round(h * k)}px`);
         // The part of the window past the screen edge, in window pixels. The top bar's
         // actions (Export, New recording) are pulled in by this much so the cursor never
         // has to leave the screen to reach them.
-        const visible = (document.documentElement.clientWidth - demo.getBoundingClientRect().left) / k;
+        const visible = (document.documentElement.clientWidth - demo.getBoundingClientRect().left) / z / k;
         demo.style.setProperty("--bleed", `${Math.max(0, Math.ceil(win.offsetWidth - visible + 16))}px`);
     };
     addEventListener("resize", fit);
@@ -218,7 +223,7 @@ function playDemo(demo: HTMLElement) {
 
     /** An element's box in the window's own (unscaled) coordinates. */
     function local(el: Element) {
-        const k = parseFloat(demo.style.getPropertyValue("--k")) || 1;
+        const k = (parseFloat(demo.style.getPropertyValue("--k")) || 1) * zoom();
         const r = el.getBoundingClientRect();
         const w = win.getBoundingClientRect();
         return { x: (r.left - w.left) / k, y: (r.top - w.top) / k, w: r.width / k, h: r.height / k };
